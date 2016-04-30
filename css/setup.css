@@ -1,0 +1,52 @@
+body {
+    font-family: Akkurat,Helvetica,Arial,sans-serif;
+}
+
+h1 {
+    text-align: center;
+    color: #2B616D;
+}
+
+input[type=text] {
+    border-color: #BAA896;
+    color: white;
+}
+
+.light_blue {
+	color: #B2DBD5;
+}
+
+.brick_red {
+	color: #FA8D62;
+}
+
+.center {
+	text-align: center;
+}
+
+.list {
+	width: 300px;
+	height: 200px;
+}
+
+.main {
+    position: relative;
+    overflow: hidden;
+    margin: 10px;
+}
+
+.main input.choose_button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0;
+    filter: alpha(opacity=0);
+}
+
+.wide {
+	width: 300px;
+}

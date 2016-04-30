@@ -44,3 +44,8 @@
     src: url('source-sans-pro/Akkurat Light Regular.otf');
     font-weight: 300;
 }
+
+@font-face {
+    font-family: ProximaNovaSoft;
+    src: url('source-sans-pro/ProximaNovaSoft-Regular.otf');
+}

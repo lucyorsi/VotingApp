@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<html>
+	<head>
+		<title>Vote</title>
+		<link rel="stylesheet" href="styles.css">
+	</head>
+<body>
+	<h1>Initiate a new vote</h1>
+	<div>
+		<form enctype="multipart/form-data" action="" method="POST">
+			<label> Vote Name: </label>
+			<input type="text" name="vote_name" placeholder="Vote Name">
+			<br><br>
+			<label> Expiry Date: </label> <!-- http://stackoverflow.com/questions/6982692/html5-input-type-date-default-value-to-today -->
+			<input type="date" name="expiry_date">
+			<input type="time" name="expiry_time">
+			<br><br>
+			<label> Choose a voting method </label>
+			<select name="vote_method">
+				<option value="single">Single</option>
+				<option value="ranking">Ranking</option>
+				<option value="weight">Weight</option>
+				<option value="majority">Majority Approval</option>
+				<option value="random">Random</option>
+				<option value="weighted_random">Weighted Random</option>
+			</select>
+			<br><br>
+			<label> Candidates List Upload: </label>
+			<input type="radio" name="candidate_upload_type" value="online" checked> Online Submission
+			<input type="radio" name="candidate_upload_type" value="excel"> Excel File
+			<input type="radio" name="candidate_upload_type" value="txt"> Text File
+			<br><br>
+			<label>Candidate List: Choose a file (.txt .xls .xlsx): </label>
+			<input type="file" name="candidate_upload_file" accept=".txt, .xls, .xlsx">
+			<br>
+			<input type="text" name="candidate_upload_text"> <!-- need to change the size of upload box-->
+			<br><br>
+			<label> Voter List Upload: </label>
+			<input type="radio" name="voter_upload_type" value="online" checked> Online Submission
+			<input type="radio" name="voter_upload_type" value="excel"> Excel File
+			<input type="radio" name="voter_upload_type" value="txt"> Text File
+			<br><br>
+			<label>Voter List: Choose a file (.txt .xls .xlsx): </label>
+			<input type="file" name="voter_upload_file" accept=".txt, .xls, .xlsx">
+			<br>
+			<input type="text" name="voter_upload_text"> <!-- need to change the size of upload box-->
+			<label>
+			<br>
+			<br>
+			<input type="submit" value="Submit">
+		</form>
+		<button class="button" name="discard" type="submit" value="">Discard</button>
+	</div>
+</body>
+</html>

@@ -1,4 +1,9 @@
 "use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 "use strict";
 function modProd(array, m) {
     /** Returns the product of the array mod m **/
@@ -71,6 +76,7 @@ var Pedersen = (function () {
         }
         var decrypt_shares = h.map(function (h_i) { return h_i.modPow(this.secret, this.p); });
         this.decrypt_shares = decrypt_shares;
+        this.global_decrypt_shares[this.party_id] = decrypt_shares;
         var r = new Array(this.num_votes);
         for (var i = 0; i < this.num_votes; i += 1) {
             var com = [x, y[i], w[i], a[i], b[i]];
@@ -124,3 +130,67 @@ var Pedersen = (function () {
     };
     return Pedersen;
 }());
+function random_vector(length, m) {
+    return Array.apply(null, Array(length)).map(function () { return randint(m); });
+}
+function range_apply(r, f) {
+    return Array.apply(null, Array(r)).map(function (x, i) {
+        return f(i);
+    });
+}
+var Voter = (function (_super) {
+    __extends(Voter, _super);
+    function Voter(p, g, n, voter_id, options, generators) {
+        _super.call(this, p, g, n, voter_id, options.length);
+        this.voter_id = voter_id;
+        this.options = options;
+        this.generators = generators;
+        this.votes_verified = Array.apply(null, Array(n)).map(function () { return false; });
+        this.votes_verified[voter_id] = true; // obviously we trust ourselves
+        //this.global_votes = new Array(n);
+        this.generator_inverses = generators.map(function (G) { return G.modPow(p.subtract(2), p); });
+    }
+    Voter.prototype.set_vote = function (vote) {
+        //TODO: maybe make sure it's valid
+        this.vote = vote;
+    };
+    Voter.prototype.encrypt_and_prove = function () {
+        this.encrypted_vote = new Array(this.num_votes);
+        var h = this.public_key;
+        this.commits = new Array(this.num_votes);
+        for (var i = 0; i < this.num_votes; i += 1) {
+            var alpha = randint(this.q);
+            var v = this.vote[i];
+            var G = this.generators[i];
+            //var w = random_vector(this.num_votes, this.q); 
+            var d = random_vector(this.num_votes, this.q);
+            var r = random_vector(this.num_votes, this.q);
+            var x = this.g.modPow(alpha, this.p);
+            var y = h.modPow(alpha, this.p).times(G).mod(this.p);
+            var u = this.q.subtract(alpha);
+            /*var Y = Array.apply(null, Array(this.options[i])).map(function (o, j){
+                return y.times(this.generator_inverses[j]);
+            });*/
+            var Y = range_apply(this.options[i], function (j) {
+                return y.times(this.generator_inverses[j]);
+            });
+            var w = u.times(d[v]).add(r[v]).mod(this.q);
+            var a = range_apply(this.options[i], function (j) {
+                return x.modPow(d[j], this.p).times(this.g.modPow(r[i], this.p)).mod(this.p);
+            });
+            var b = range_apply(this.options[i], function (j) {
+                return Y[j].modPow(d[j], this.p).times(this.h.modPow(r[i], this.p)).mod(this.p);
+            });
+            var c = beacon(this.voter_id, [x, y, Y, a, b], this.q);
+            var prev_d = d[v];
+            var prev_r = r[v];
+            var d_sum = d.reduce(function (d1, d2) { return d1.add(d2); }).subtract(d[v]);
+            d[v] = c.subtract(d_sum).mod(this.q);
+            r[v] = w.subtract(u.times(d[v])).mod(this.q);
+            var new_r = alpha.times(prev_d.subtract(d[v])).add(prev_r).mod(this.q);
+            this.commits[i] = { vote: { x: x, y: y }, Y: Y, a: a, b: b, d: d, r: r };
+        }
+        return this.commits;
+    };
+    return Voter;
+}(Pedersen));

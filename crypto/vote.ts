@@ -48,7 +48,7 @@ function get_public_key_shares(): Array<BigInteger> {
     return [bigInt(6), bigInt(3)]; // TODO: make it real
 }
 
-function beacon(p_id: number, array: Array<BigInteger>, m: BigInteger): BigInteger{
+function beacon(p_id: number, array: Array<any>, m: BigInteger): BigInteger{
     return bigInt("2341234123412341234", 10); //TODO: make it real
 }
 
@@ -116,6 +116,7 @@ class Pedersen {
 
         var decrypt_shares = h.map(function (h_i){ return h_i.modPow(this.secret, this.p); }); 
         this.decrypt_shares = decrypt_shares;
+        this.global_decrypt_shares[this.party_id] = decrypt_shares;
 
         var r = new Array(this.num_votes);
         for (var i = 0; i < this.num_votes; i += 1){
@@ -187,6 +188,111 @@ class Pedersen {
     }
 }
 
+interface Vote_commit {
+    vote: Ciphertext;
+    Y: Array<BigInteger>;
+    a: Array<BigInteger>;
+    b: Array<BigInteger>;
+    d: Array<BigInteger>;
+    r: Array<BigInteger>;
+}
+
+function random_vector(length: number, m: BigInteger): Array<BigInteger> {
+    return Array.apply(null, Array(length)).map(function (){ return randint(m); });
+}
+
+function range_apply(r: number, f): Array<any> {
+    return Array.apply(null, Array(r)).map(function (x, i){
+        return f(i);
+    });
+}
+
+class Voter extends Pedersen {
+    votes_verified: Array<boolean>;
+    //global_votes: Array<
+    generator_inverses: Array<BigInteger>;
+    vote: Array<number>;
+    encrypted_vote: Array<Ciphertext>;
+    commits: Array<Vote_commit>;
+
+    constructor(p: BigInteger, g: BigInteger, n: number, public voter_id: number,
+                public options: Array<number>, public generators: Array<BigInteger>){
+        
+        super(p, g, n, voter_id, options.length);
+
+        this.votes_verified = Array.apply(null, Array(n)).map(function(){ return false; });
+        this.votes_verified[voter_id] = true; // obviously we trust ourselves
+
+        //this.global_votes = new Array(n);
+
+        this.generator_inverses = generators.map(function(G){ return G.modPow(p.subtract(2), p) });
+    }
+
+    set_vote(vote: Array<number>): void {
+        //TODO: maybe make sure it's valid
+        
+        this.vote = vote;
+    }
+
+    encrypt_and_prove(): Array<Vote_commit> {
+        this.encrypted_vote = new Array(this.num_votes);
+
+        var h = this.public_key;
+
+        this.commits = new Array(this.num_votes);
+
+        for (var i = 0; i < this.num_votes; i += 1){
+            var alpha = randint(this.q);
+
+            var v = this.vote[i];
+            var G = this.generators[i];
+
+            //var w = random_vector(this.num_votes, this.q); 
+            var d = random_vector(this.num_votes, this.q); 
+            var r = random_vector(this.num_votes, this.q); 
+
+            var x = this.g.modPow(alpha, this.p);
+            var y = h.modPow(alpha, this.p).times(G).mod(this.p);
+
+            var u = this.q.subtract(alpha);
+
+            /*var Y = Array.apply(null, Array(this.options[i])).map(function (o, j){
+                return y.times(this.generator_inverses[j]);
+            });*/
+
+            var Y = range_apply(this.options[i], function(j){
+                return y.times(this.generator_inverses[j]);
+            });
+
+            var w = u.times(d[v]).add(r[v]).mod(this.q);
+
+            var a = range_apply(this.options[i], function(j){
+                return x.modPow(d[j], this.p).times(this.g.modPow(r[i], this.p)).mod(this.p);
+            });
+
+            var b = range_apply(this.options[i], function(j){
+                return Y[j].modPow(d[j], this.p).times(this.h.modPow(r[i], this.p)).mod(this.p);
+            });
+
+            var c = beacon(this.voter_id, [x, y, Y, a, b], this.q);
+
+            var prev_d = d[v];
+            var prev_r = r[v];
+
+            var d_sum = d.reduce(function (d1, d2){ return d1.add(d2); }).subtract(d[v]);
+            d[v] = c.subtract(d_sum).mod(this.q);
+
+            r[v] = w.subtract(u.times(d[v])).mod(this.q);
+            var new_r = alpha.times(prev_d.subtract(d[v])).add(prev_r).mod(this.q);
+
+            this.commits[i] = {vote: {x: x, y: y}, Y: Y, a: a, b: b, d: d, r: r};
+        }
+
+        return this.commits;
+    }
+}
+
+          
 
 
 

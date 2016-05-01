@@ -1,0 +1,33 @@
+.my_table{
+    margin:auto;
+    text-align: center;
+    font-family: ProximaNovaSoft,Helvetica,Arial,sans-serif;
+    font-weight: bold;
+    width: 40%;
+    left: 30%;
+}
+
+.table_heading{
+    text-align:center;
+    font-size: 120%
+}
+
+.table_elem_1{
+    color: #baa896;
+}
+
+.table_elem_1:hover{
+    cursor: pointer;
+    background: #baa896;
+    color: white;
+}
+
+.table_elem_2{
+    color: #a5c3cf;
+}
+
+.table_elem_2:hover{
+    cursor: pointer;
+    background: #a5c3cf;
+    color: white;
+}

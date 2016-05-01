@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<html>
+
+<head>
+
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Another Vote</title>
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+	<link href="css/hover.css" rel="stylesheet" media="all">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+	<link rel="stylesheet" href="./css/font.css">
+	<link rel="stylesheet" href="./css/index.css">
+	<link rel="stylesheet" href="./css/setup_complete.css">
+	<link rel="stylesheet" href="./css/vote.css">
+
+</head>
+
+<body>
+
+	<div class="container">
+
+    <div class="row navi">
+        <div class="col-md-3 col-sm-3 col-xs-3">
+            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal">Another Vote</a></h3>
+        </div>
+        <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
+            <!-- <h5 ><a class="navi-element hvr-sink">Account</a></h5>
+            <h5 ><a class="navi-element hvr-sink">Dashboard</a></h5>
+            <h5 ><a class="navi-element hvr-sink">Logout</a></h5>
+            <h5 ><a class="navi-element hvr-sink">Username</a></h5> -->
+            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalLogin">Login</a>
+            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalRegister">Register</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <hr style="width=100%;">
+    </div>
+
+    <div class="row">
+
+		<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading">Vote Name</h1>
+
+		<div class="col-md-12 col-sm-12 col-xs-12">
+			<br>
+			<p class="my_p_1" >Please input your approval for each candidate.</p>
+			<br>
+		</div>
+
+		<form enctype="multipart/form-data" action="" method="POST">
+			<table class="col-md-12 col-sm-12 col-xs-12 table my_table">
+				<tr>
+					<th class="table_heading">Candidates</th>
+					<th class="table_heading">Approval Rating(Max of 100)</th>
+				</tr>
+				<tr>
+					<td class="table_elem_3">1. XXX XXX</td>
+					<td><input type="number" class="form-control table_input" name="candidate_1_weight" min="0" max="100"></td>
+				</tr>
+				<tr>
+					<td class="table_elem_3">2. XXX XXX</td>
+					<td><input type="number" class="form-control table_input" name="candidate_2_weight" min="0" max="100"></td>
+				</tr>
+				<tr>
+					<td class="table_elem_3">3. XXX XXX</td>
+					<td><input type="number" class="form-control table_input" name="candidate_3_weight" min="0" max="100"></td>
+				</tr>
+				<tr>
+					<td class="table_elem_3">4. XXX XXX</td>
+					<td><input type="number" class="form-control table_input" name="candidate_4_weight" min="0" max="100"></td>
+				</tr>
+				<tr>
+					<td class="table_elem_3">5. XXX XXX</td>
+					<td><input type="number" class="form-control table_input" name="candidate_5_weight" min="0" max="100"></td>
+				</tr>
+			</table>
+			<div class="col-md-12 col-sm-12 col-xs-12">
+				<br>
+			</div>
+			<input class="col-md-12 col-sm-12 col-xs-12 btn-big btn-view hvr-grow" type="submit" value="Submit">
+		</form>
+
+		<div class="col-md-12 col-sm-12 col-xs-12">
+			<button class= "btn-big btn-return-1 hvr-grow"> Return to homepage </button>
+		</div>
+
+	</div>
+
+	<div class="row">
+        <hr style="width=100%;">
+    </div>
+
+	</div>
+
+</body>
+</html>

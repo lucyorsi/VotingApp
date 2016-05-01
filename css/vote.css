@@ -31,3 +31,12 @@
     background: #a5c3cf;
     color: white;
 }
+
+.table_elem_3{
+    font-size:130%;
+}
+
+.table_input{
+    width:80px;
+    margin:auto;
+}

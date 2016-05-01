@@ -26,13 +26,23 @@
 .btn-view{
     background: #2b616d;
     color: white;
-    width:200px;
+    width:20%;
     margin-top: 20px;
+    margin-left:28%;
+    margin-right:4%;
 }
 
 .btn-return{
     background: #e38b75;
     color: white;
-    width:200px;
+    width:20%;
+    margin-top: 20px;
+}
+
+.btn-return-1{
+    background: #e38b75;
+    color: white;
+    width:20%;
+    margin-left: 40%;
     margin-top: 20px;
 }

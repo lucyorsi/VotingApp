@@ -3,16 +3,52 @@
 
 <html>
 	<head>
-		<title>Vote</title>
-		<link rel="stylesheet" href="styles.css">
+
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Another Vote</title>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./css/font.css">
+    <link rel="stylesheet" href="./css/index.css">
+    <link rel="stylesheet" href="./css/setup_complete.css">
+    <link href="css/hover.css" rel="stylesheet" media="all">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
 	</head>
 <body>
-	<div>
-		<p> Thanks for voting! </p>
+
+	<div class="container">
+
+    <div class="row navi">
+        <div class="col-md-3 col-sm-3 col-xs-3">
+            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal">Another Vote</a></h3>
+        </div>
+        <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
+            <!-- <h5 ><a class="navi-element hvr-sink">Account</a></h5>
+            <h5 ><a class="navi-element hvr-sink">Dashboard</a></h5>
+            <h5 ><a class="navi-element hvr-sink">Logout</a></h5>
+            <h5 ><a class="navi-element hvr-sink">Username</a></h5> -->
+            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalLogin">Login</a>
+            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalRegister">Register</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <hr style="width=100%;">
+    </div>
+
+    <div class="row" >
+
+		<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading" style="margin-top:40px"> Thanks for voting! </h1>
+		<p class="col-md-12 col-sm-12 col-xs-12 my_p_1" style="margin-top:20px">You have voted for: Vote Name</p>
+		<div class="col-md-12 col-sm-12 col-xs-12">
+			<button class= "btn-big btn-return-1 hvr-grow "> Return to homepage </button>
+		</div>
+
 	</div>
-	<h1>You have voted for: Vote Name</h1>
-	<div>
-		<button> Return to homepage </button>
-	</div>
+
 </body>
 </html>

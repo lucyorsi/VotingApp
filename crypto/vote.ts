@@ -48,11 +48,6 @@ function mod_div(n: BigInteger, d: BigInteger, m: BigInteger):BigInteger {
     return n.times(inverse).mod(m);
 }
 
-function get_public_key_shares(): Array<BigInteger> {
-    //if bad, return []; we will check length
-    return [bigInt(6), bigInt(3)]; // TODO: make it real
-}
-
 function beacon(p_id: number, array: Array<any>, m: BigInteger): BigInteger{
     //TODO: should p_id be harder to control? Like a much longer string?
     var all_nums = flatten(array);
@@ -105,16 +100,31 @@ class Pedersen {
         this.secret = randint(this.q);
         this.public_key_share = g.modPow(this.secret, p);
         //TODO: publish_public_key_share(party_id, self.public_key_share);
+        
+        this.public_key_shares = new Array(n);
     }
 
-    make_public_key(): void{
-        var public_key_shares = get_public_key_shares(); // grab the others' key shares
+    receive_public_key_share(p_id: number, share: BigInteger){
+        this.public_key_shares[p_id] = share;
+    }
 
-        if (public_key_shares.length === this.n &&
-            this.public_key_share.equals(public_key_shares[this.party_id])){
+    make_public_key(): BigInteger{
+        //var public_key_shares = get_public_key_shares(); // grab the others' key shares
+        
+        this.public_key_shares[this.party_id] = this.public_key_share;
 
-            this.public_key = modProd(public_key_shares, this.p);
+        var len = this.public_key_shares.reduce(function(a, b){ 
+            return a + (typeof b !== "undefined" ? 1 : 0);
+        }, 0);
+
+        if (len === this.n){
+            this.public_key = modProd(this.public_key_shares, this.p);
             this.h = this.public_key;
+
+            return this.public_key;
+        }
+        else {
+            return null;
         }
     }
 
@@ -412,8 +422,6 @@ class Voter extends Pedersen {
             return out;
         }
     }
-
-
 }
 
           

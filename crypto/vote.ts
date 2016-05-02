@@ -48,15 +48,24 @@ function mod_div(n: BigInteger, d: BigInteger, m: BigInteger):BigInteger {
     return n.times(inverse).mod(m);
 }
 
+function pad_hex_string(str: string): string {
+    if ((str.length % 2) !== 0){
+        str = str + "0";
+    }
+    return str;
+}
+
 function beacon(p_id: number, array: Array<any>, m: BigInteger): BigInteger{
     //TODO: should p_id be harder to control? Like a much longer string?
     var all_nums = flatten(array);
+    console.log(array);
 
     var shaObj = new jsSHA("SHA-256", "HEX");
-    shaObj.update(p_id.toString(16));
+    console.log(pad_hex_string(p_id.toString(16)));
 
     for (let n of all_nums){
-        shaObj.update(n.toString(16)); // update the SHA with hex representation
+        console.log("ntostr", n.toString(16));
+        shaObj.update(pad_hex_string(n.toString(16))); // update the SHA with hex representation
     }
 
     var hash = shaObj.getHash("HEX");
@@ -135,24 +144,27 @@ class Pedersen {
         var x = this.public_key_share;
         var y = this.decrypt_shares;
         var alpha = this.secret;
+        var p = this.p;
+        var q = this.q;
+        var g = this.g;
         
-        var w = Array.apply(null, Array(this.num_votes)).map(function (){ return randint(this.q); });
-        var a = w.map(function (w_i){ return this.g.modPow(w_i, this.p); });
+        var w = Array.apply(null, Array(this.num_votes)).map(function (){ return randint(q); });
+        var a = w.map(function (w_i){ return g.modPow(w_i, p); });
         var b = new Array(this.num_votes);
         for (var i = 0; i < this.num_votes; i += 1){
-            b[i] = h[i].modPow(w[i], this.p);
+            b[i] = h[i].modPow(w[i], p);
         }
 
-        var decrypt_shares = h.map(function (h_i){ return h_i.modPow(this.secret, this.p); }); 
+        var decrypt_shares = h.map(function (h_i){ return h_i.modPow(alpha, p); }); 
         this.decrypt_shares = decrypt_shares;
         this.global_decrypt_shares[this.party_id] = decrypt_shares;
 
         var r = new Array(this.num_votes);
         for (var i = 0; i < this.num_votes; i += 1){
             var com = [x, y[i], w[i], a[i], b[i]];
-            var c = beacon(this.party_id, com, this.q);
+            var c = beacon(this.party_id, com, q);
 
-            r[i] = w[i].add(alpha.times(c[i]).mod(this.q));
+            r[i] = w[i].add(alpha.times(c[i]).mod(q));
         }
 
         return {y: y, w: w, a: a, b: b, r: r};
@@ -277,49 +289,55 @@ class Voter extends Pedersen {
 
         this.commits = new Array(this.num_votes);
 
+        var p = this.p;
+        var g = this.g;
+        var q = this.q;
+        var generator_inverses = this.generator_inverses;
+
         for (var i = 0; i < this.num_votes; i += 1){
             var alpha = randint(this.q);
 
             var v = this.vote[i];
             var G = this.generators[i];
+            console.log("i:", i);
+            console.log("G:", G);
 
             //var w = random_vector(this.num_votes, this.q); 
-            var d = random_vector(this.num_votes, this.q); 
-            var r = random_vector(this.num_votes, this.q); 
+            var d = random_vector(this.options[i], q); 
+            var r = random_vector(this.options[i], q); 
 
-            var x = this.g.modPow(alpha, this.p);
-            var y = h.modPow(alpha, this.p).times(G).mod(this.p);
+            var x = g.modPow(alpha, p);
+            var y = h.modPow(alpha, p).times(G).mod(p);
+            console.log("h:", h.toString());
+            console.log("alpha:", alpha.toString());
+            console.log("p:", p.toString());
+            console.log("G:", G.toString());
+            console.log("y:", y.toString());
 
-            var u = this.q.subtract(alpha);
+            var u = q.subtract(alpha);
 
             /*var Y = Array.apply(null, Array(this.options[i])).map(function (o, j){
                 return y.times(this.generator_inverses[j]);
             });*/
 
-            var Y = range_apply(this.options[i], function(j){
-                return y.times(this.generator_inverses[j]);
-            });
+            var Y = range_apply(this.options[i], (j) => y.times(generator_inverses[j]));
 
-            var w = u.times(d[v]).add(r[v]).mod(this.q);
+            var w = u.times(d[v]).add(r[v]).mod(q);
 
-            var a = range_apply(this.options[i], function(j){
-                return x.modPow(d[j], this.p).times(this.g.modPow(r[i], this.p)).mod(this.p);
-            });
+            var a = range_apply(this.options[i], (j) => x.modPow(d[j], p).times(g.modPow(r[i], p)).mod(p));
 
-            var b = range_apply(this.options[i], function(j){
-                return Y[j].modPow(d[j], this.p).times(this.h.modPow(r[i], this.p)).mod(this.p);
-            });
+            var b = range_apply(this.options[i], (j) => Y[j].modPow(d[j], p).times(h.modPow(r[i], p)).mod(p));
 
-            var c = beacon(this.voter_id, [x, y, Y, a, b], this.q);
+            var c = beacon(this.voter_id, [x, y, Y, a, b], q);
 
             var prev_d = d[v];
             var prev_r = r[v];
 
             var d_sum = d.reduce(function (d1, d2){ return d1.add(d2); }).subtract(d[v]);
-            d[v] = c.subtract(d_sum).mod(this.q);
+            d[v] = c.subtract(d_sum).mod(q);
 
-            r[v] = w.subtract(u.times(d[v])).mod(this.q);
-            var new_r = alpha.times(prev_d.subtract(d[v])).add(prev_r).mod(this.q);
+            r[v] = w.subtract(u.times(d[v])).mod(q);
+            var new_r = alpha.times(prev_d.subtract(d[v])).add(prev_r).mod(q);
 
             this.commits[i] = {vote: {x: x, y: y}, Y: Y, a: a, b: b, d: d, r: r};
         }
@@ -423,6 +441,97 @@ class Voter extends Pedersen {
         }
     }
 }
+
+function test_vote(num_voters = 2, options = [2]){
+    var p = bigInt("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF", 16);
+
+    var q = p.prev().divide(2);
+    var g = bigInt(2);
+    var generators = [bigInt(2), bigInt(4), bigInt(8), bigInt(16)];
+
+    var num_votes = options.length;
+
+    //just a bunch of random votes
+    //really shouldn't use random_vector() as that's for BigInteger but I'm super lazy
+    //also really need to fix options[0]
+    var votes = range_apply(num_voters, (i) => random_vector(num_votes, bigInt(options[0])).map((x) => x.toJSNumber()));
+
+    var voters = [];
+
+    var vote_proofs = [];
+
+    for (var i = 0; i < num_voters; i += 1){
+        voters.push(new Voter(p, g, num_voters, i, options, generators));
+
+        voters[voters.length-1].set_vote(votes[i]);
+
+    }
+
+    for (var i = 0; i < num_voters; i += 1){
+        for (var j = 0; j < num_voters; j += 1){
+            voters[j].receive_public_key_share(i, voters[i].public_key_share);
+        }
+    }
+
+    for (var i = 0; i < num_voters; i += 1){
+        voters[i].make_public_key();
+        console.log(voters[i].public_key.toString());
+        vote_proofs.push(voters[i].encrypt_and_prove());
+    }
+
+    for (var i = 0; i < num_voters; i += 1){
+        for (var j = 0; j < num_voters; j += 1){
+            voters[j].verify_vote(i, vote_proofs[i]);
+        }
+    }
+
+    // normally we might call verify_vote_all() but's it's really necessary here
+    
+    var pedersen_proofs = [];
+
+    for (var i = 0; i < num_voters; i += 1){
+        pedersen_proofs.push(voters[i].calc_vote_step1());
+    }
+
+    for (i = 0; i < num_voters; i += 1){
+        for (var j = 0; j < num_voters; j += 1){
+            voters[j].log_ZKP_verify(i, pedersen_proofs[i]);
+        }
+    }
+
+    var outs = [];
+
+    for (var i = 0; i < num_voters; i += 1){
+        outs.push(voters[i].calc_vote_step2());
+    }
+
+    var test_out = outs[0];
+    for (var i = 0; i < num_voters; i += 1){
+        console.assert(test_out === (outs[i]), "Decryption resulted in different values.");
+    }
+
+    console.log("Election result:", test_out);
+
+    var expected_out = range_apply(num_votes, (i) => votes.reduce((x, y) => x*y[i], 1));
+
+    console.log("Expected result:", expected_out);
+
+    console.assert(test_out === expected_out, "Bad out");
+
+    console.log("Success!");
+}
+
+
+
+    
+
+
+
+
+
+
+
+
 
           
 

@@ -72,6 +72,7 @@ class Pedersen {
     secret: BigInteger;
     public_key_share: BigInteger;
     public_key: BigInteger;
+    h: BigInteger;
     decrypt_shares: Array<BigInteger>;
     public_key_shares: Array<BigInteger>;
     ciphertexts: Array<Ciphertext>;
@@ -96,6 +97,7 @@ class Pedersen {
             this.public_key_share.equals(public_key_shares[this.party_id])){
 
             this.public_key = modProd(public_key_shares, this.p);
+            this.h = this.public_key;
         }
     }
 
@@ -165,14 +167,19 @@ class Pedersen {
         return verified; //TODO: consider if this is necessary
     }
 
-    decrypt(): Array<BigInteger> | boolean {
+    log_ZKP_verify_all(): boolean {
+        //TODO: double check this is all we need
+        return this.pedersen_commits_verified.reduce(function(a, b){ return a && b});
+    }
+
+    decrypt(): Array<BigInteger> {
         var all_verified = this.pedersen_commits_verified.reduce(function (a, b){
             return a && b;
         });
 
         if (!all_verified){
             console.log("Haven't yet finished verifying all other players.");
-            return false;
+            return null;
         }
         else {
             var messages = new Array(this.num_votes);
@@ -201,7 +208,7 @@ function random_vector(length: number, m: BigInteger): Array<BigInteger> {
     return Array.apply(null, Array(length)).map(function (){ return randint(m); });
 }
 
-function range_apply(r: number, f): Array<any> {
+function range_apply(r: number, f: (n: number) => any): Array<any> {
     return Array.apply(null, Array(r)).map(function (x, i){
         return f(i);
     });
@@ -209,11 +216,13 @@ function range_apply(r: number, f): Array<any> {
 
 class Voter extends Pedersen {
     votes_verified: Array<boolean>;
-    //global_votes: Array<
     generator_inverses: Array<BigInteger>;
+    global_votes: Array<Array<Ciphertext>>;
     vote: Array<number>;
     encrypted_vote: Array<Ciphertext>;
     commits: Array<Vote_commit>;
+    ws: Array<Ciphertext>;
+    out: Array<BigInteger>;
 
     constructor(p: BigInteger, g: BigInteger, n: number, public voter_id: number,
                 public options: Array<number>, public generators: Array<BigInteger>){
@@ -223,7 +232,7 @@ class Voter extends Pedersen {
         this.votes_verified = Array.apply(null, Array(n)).map(function(){ return false; });
         this.votes_verified[voter_id] = true; // obviously we trust ourselves
 
-        //this.global_votes = new Array(n);
+        this.global_votes = new Array(n);
 
         this.generator_inverses = generators.map(function(G){ return G.modPow(p.subtract(2), p) });
     }
@@ -290,6 +299,104 @@ class Voter extends Pedersen {
 
         return this.commits;
     }
+
+    verify_vote(p_id: number, commits: Array<Vote_commit>): boolean {
+        var verified = true; //TODO: double check scope of this guy
+
+        for (var i = 0; i < this.num_votes; i += 1){
+            var commit = commits[i];
+
+            var c = beacon(this.voter_id, [commit.vote.x, commit.vote.y, commit.Y, 
+                           commit.a, commit.b], this.q);
+
+            if (!c.equals(commit.d.reduce(function (d1, d2){ // make sure c == sum(d)
+                return d1.add(d2).mod(this.q); }))){
+
+                    verified = false;
+            }
+
+            for (var j = 0; j < this.options[i]; j += 1){
+                var test1 = commit.a[j].equals(commit.vote.x.modPow(commit.d[j], this.p).times(
+                    this.g.modPow(commit.r[j], this.p)).mod(this.p));
+                var test2 = commit.b[j].equals(commit.Y[j].modPow(commit.d[j], this.p).times(
+                    this.h.modPow(commit.r[j], this.p)).mod(this.p));
+
+                if (!(test1 && test2)){
+                    verified = false;
+                    console.log(p_id + "failed their verification on one of the a or b tests.");
+                }
+
+                if (!verified){
+                    break;
+                }
+            }
+
+            if (!verified){
+                break;
+            }
+            else {
+                if (typeof this.global_votes[p_id] === "undefined"){
+                    this.global_votes[p_id] = Array(this.num_votes);
+                }
+
+                this.global_votes[p_id][i] = commit.vote;
+            }
+        }
+
+        if (!verified){
+            this.global_votes[p_id] = null; // remove their votes as they are not valid
+            console.log("Failed to verify" + p_id + "on verification. They might be cheating! Abort!");
+        }
+        else {
+            console.log(p_id + "passed verification.");
+            this.votes_verified[p_id] = true;
+        }
+
+        return verified;
+    }
+
+    calc_vote_step1(): Pedersen_commit {
+        var all_verified = this.votes_verified.reduce(function(a, b){
+            return a && b;
+        });
+
+        if (!all_verified){
+            console.log("Cannot continue with decryption, not all voters verified.");
+            return null;
+        }
+        else {
+            this.global_votes[this.voter_id] = this.encrypted_vote;
+
+            var ws = new Array(this.num_votes);
+
+            for (var i = 0; i < this.num_votes; i += 1){
+                var w = this.global_votes[i].reduce(function(a, b){
+                    return {x: a.x.times(b.x).mod(this.p), y: a.y.times(b.y).mod(this.p)};
+                });
+
+                ws[i] = w;
+            }
+
+            this.ws = ws;
+
+            return this.log_ZKP_prove(ws);
+        }
+    }
+
+    calc_vote_step2(): Array<BigInteger> {
+        if (!this.log_ZKP_verify_all()){
+            //not yet verified everyone
+            return null;
+        }
+
+        else {
+            var out = this.decrypt();
+            this.out = out;
+            return out;
+        }
+    }
+
+
 }
 
           

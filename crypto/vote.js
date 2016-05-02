@@ -60,6 +60,7 @@ var Pedersen = (function () {
         if (public_key_shares.length === this.n &&
             this.public_key_share.equals(public_key_shares[this.party_id])) {
             this.public_key = modProd(public_key_shares, this.p);
+            this.h = this.public_key;
         }
     };
     Pedersen.prototype.log_ZKP_prove = function (ciphertexts) {
@@ -110,13 +111,17 @@ var Pedersen = (function () {
         }
         return verified; //TODO: consider if this is necessary
     };
+    Pedersen.prototype.log_ZKP_verify_all = function () {
+        //TODO: double check this is all we need
+        return this.pedersen_commits_verified.reduce(function (a, b) { return a && b; });
+    };
     Pedersen.prototype.decrypt = function () {
         var all_verified = this.pedersen_commits_verified.reduce(function (a, b) {
             return a && b;
         });
         if (!all_verified) {
             console.log("Haven't yet finished verifying all other players.");
-            return false;
+            return null;
         }
         else {
             var messages = new Array(this.num_votes);
@@ -147,7 +152,7 @@ var Voter = (function (_super) {
         this.generators = generators;
         this.votes_verified = Array.apply(null, Array(n)).map(function () { return false; });
         this.votes_verified[voter_id] = true; // obviously we trust ourselves
-        //this.global_votes = new Array(n);
+        this.global_votes = new Array(n);
         this.generator_inverses = generators.map(function (G) { return G.modPow(p.subtract(2), p); });
     }
     Voter.prototype.set_vote = function (vote) {
@@ -191,6 +196,80 @@ var Voter = (function (_super) {
             this.commits[i] = { vote: { x: x, y: y }, Y: Y, a: a, b: b, d: d, r: r };
         }
         return this.commits;
+    };
+    Voter.prototype.verify_vote = function (p_id, commits) {
+        var verified = true; //TODO: double check scope of this guy
+        for (var i = 0; i < this.num_votes; i += 1) {
+            var commit = commits[i];
+            var c = beacon(this.voter_id, [commit.vote.x, commit.vote.y, commit.Y,
+                commit.a, commit.b], this.q);
+            if (!c.equals(commit.d.reduce(function (d1, d2) {
+                return d1.add(d2).mod(this.q);
+            }))) {
+                verified = false;
+            }
+            for (var j = 0; j < this.options[i]; j += 1) {
+                var test1 = commit.a[j].equals(commit.vote.x.modPow(commit.d[j], this.p).times(this.g.modPow(commit.r[j], this.p)).mod(this.p));
+                var test2 = commit.b[j].equals(commit.Y[j].modPow(commit.d[j], this.p).times(this.h.modPow(commit.r[j], this.p)).mod(this.p));
+                if (!(test1 && test2)) {
+                    verified = false;
+                    console.log(p_id + "failed their verification on one of the a or b tests.");
+                }
+                if (!verified) {
+                    break;
+                }
+            }
+            if (!verified) {
+                break;
+            }
+            else {
+                if (typeof this.global_votes[p_id] === "undefined") {
+                    this.global_votes[p_id] = Array(this.num_votes);
+                }
+                this.global_votes[p_id][i] = commit.vote;
+            }
+        }
+        if (!verified) {
+            this.global_votes[p_id] = null; // remove their votes as they are not valid
+            console.log("Failed to verify" + p_id + "on verification. They might be cheating! Abort!");
+        }
+        else {
+            console.log(p_id + "passed verification.");
+            this.votes_verified[p_id] = true;
+        }
+        return verified;
+    };
+    Voter.prototype.calc_vote_step1 = function () {
+        var all_verified = this.votes_verified.reduce(function (a, b) {
+            return a && b;
+        });
+        if (!all_verified) {
+            console.log("Cannot continue with decryption, not all voters verified.");
+            return null;
+        }
+        else {
+            this.global_votes[this.voter_id] = this.encrypted_vote;
+            var ws = new Array(this.num_votes);
+            for (var i = 0; i < this.num_votes; i += 1) {
+                var w = this.global_votes[i].reduce(function (a, b) {
+                    return { x: a.x.times(b.x).mod(this.p), y: a.y.times(b.y).mod(this.p) };
+                });
+                ws[i] = w;
+            }
+            this.ws = ws;
+            return this.log_ZKP_prove(ws);
+        }
+    };
+    Voter.prototype.calc_vote_step2 = function () {
+        if (!this.log_ZKP_verify_all()) {
+            //not yet verified everyone
+            return null;
+        }
+        else {
+            var out = this.decrypt();
+            this.out = out;
+            return out;
+        }
     };
     return Voter;
 }(Pedersen));

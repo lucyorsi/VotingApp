@@ -14,7 +14,7 @@ function modProd(array: Array<BigInteger>, m: BigInteger){
 
     var p = array.reduce(function (a, b){
         return a.multiply(b).mod(m);
-    });
+    }, bigInt.one);
 
     return p;
 }
@@ -107,6 +107,7 @@ class Pedersen {
     decrypt_shares: Array<BigInteger>;
     public_key_shares: Array<BigInteger>;
     ciphertexts: Array<Ciphertext>;
+    h_thing: Array<BigInteger>;
 
     constructor(public p: BigInteger, public g: BigInteger, public n: number, 
                 public party_id: number, public num_votes: number){
@@ -148,12 +149,13 @@ class Pedersen {
     }
 
     log_ZKP_prove(ciphertexts: Array<Ciphertext>): Pedersen_commit{
+        this.ciphertexts = ciphertexts;
         var h = ciphertexts.map(function (c){ return c.x});
-        //this.h = h;
+        this.h_thing = h;
       
         var x = this.public_key_share;
-        var y = this.decrypt_shares;
         var alpha = this.secret;
+        console.log(alpha.toString());
         var p = this.p;
         var q = this.q;
         var g = this.g;
@@ -167,6 +169,7 @@ class Pedersen {
 
         var decrypt_shares = h.map(function (h_i){ return h_i.modPow(alpha, p); }); 
         this.decrypt_shares = decrypt_shares;
+        var y = this.decrypt_shares;
         this.global_decrypt_shares[this.party_id] = decrypt_shares;
 
         var r = new Array(this.num_votes);
@@ -174,13 +177,14 @@ class Pedersen {
             var com = [x, y[i], w[i], a[i], b[i]];
             var c = beacon(this.party_id, com, q);
 
-            r[i] = w[i].add(alpha.times(c[i]).mod(q));
+            r[i] = w[i].add(alpha.times(c)).mod(q);
         }
 
         return {y: y, w: w, a: a, b: b, r: r};
     }
 
     log_ZKP_verify(p_id: number, commit: Pedersen_commit): boolean{
+        var h = this.h_thing;
         var x = this.public_key_shares[p_id];
 
         var y = commit.y; //maybe there's a cleaner way....
@@ -193,12 +197,12 @@ class Pedersen {
 
         for (var i = 0; i < this.num_votes; i += 1){
             var com = [x, y[i], w[i], a[i], b[i]];
-            var c = beacon(this.party_id, com, this.q);
+            var c = beacon(p_id, com, this.q);
 
             var test1 = this.g.modPow(r[i], this.p).equals(
                 a[i].times(x.modPow(c, this.p)).mod(this.p));
 
-            var test2 = this.public_key.modPow(r[i], this.p).equals(
+            var test2 = h[i].modPow(r[i], this.p).equals(
                 b[i].times(y[i].modPow(c, this.p)).mod(this.p));
 
             if (!(test1 && test2)){
@@ -234,7 +238,8 @@ class Pedersen {
             var messages = new Array(this.num_votes);
 
             for (var i = 0; i < this.num_votes; i += 1){
-                var l = this.global_decrypt_shares.map(function(x){ return x[i]; });
+                var l = this.global_decrypt_shares.map((x) => x[i]);
+                console.log(l);
                 var P = modProd(l, this.p);
                 messages[i] = mod_div(this.ciphertexts[i].y, P, this.p);
             }
@@ -316,6 +321,7 @@ class Voter extends Pedersen {
 
             var x = g.modPow(alpha, p);
             var y = h.modPow(alpha, p).times(G).mod(p);
+            this.encrypted_vote[i] = {x: x, y: y};
 
             //var u = q.subtract(alpha);
 
@@ -366,7 +372,7 @@ class Voter extends Pedersen {
         var p = this.p;
         var q = this.q;
         var g = this.g;
-        var h = this.h;
+        var h = this.public_key;
 
         for (var i = 0; i < this.num_votes; i += 1){
             var commit = commits[i];
@@ -473,7 +479,7 @@ class Voter extends Pedersen {
     }
 }
 
-function test_vote(num_voters = 2, options = [2]){
+function test_vote(num_voters = 2, options = [4]){
     var p = bigInt("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF", 16);
 
     var q = p.prev().divide(2);
@@ -487,7 +493,7 @@ function test_vote(num_voters = 2, options = [2]){
     //also really need to fix options[0]
     //var votes = range_apply(num_voters, (i) => random_vector(num_votes, bigInt(options[0])).map((x) => x.toJSNumber()));
     
-    var votes = [[0], [1]];
+    var votes = [[3], [2]];
 
     var voters = [];
 
@@ -521,7 +527,7 @@ function test_vote(num_voters = 2, options = [2]){
         }
     }
 
-    // normally we might call verify_vote_all() but's it's really necessary here
+    // normally we might call verify_vote_all() but it's not really necessary here
     
     var pedersen_proofs = [];
 
@@ -538,7 +544,10 @@ function test_vote(num_voters = 2, options = [2]){
     var outs = [];
 
     for (var i = 0; i < num_voters; i += 1){
-        outs.push(voters[i].calc_vote_step2());
+        var o = voters[i].calc_vote_step2();
+        outs[i] = o;
+
+        console.log(o.toString());
     }
 
     var test_out = outs[0];

@@ -18,6 +18,15 @@ function modProd(array, m) {
     });
     return p;
 }
+function rmod(n, m) {
+    /* this function is needed because the BigInt lib thinks
+     * -1 mod 2 == -1. Whatever. */
+    var r = n.mod(m);
+    if (r.isNegative()) {
+        r = m.add(r);
+    }
+    return r;
+}
 function hex_to_int(str) {
     return bigInt(str, 16);
 }
@@ -49,12 +58,10 @@ function pad_hex_string(str) {
 function beacon(p_id, array, m) {
     //TODO: should p_id be harder to control? Like a much longer string?
     var all_nums = flatten(array);
-    console.log(array);
     var shaObj = new jsSHA("SHA-256", "HEX");
-    console.log(pad_hex_string(p_id.toString(16)));
+    shaObj.update(pad_hex_string(p_id.toString(16)));
     for (var _i = 0, all_nums_1 = all_nums; _i < all_nums_1.length; _i++) {
         var n = all_nums_1[_i];
-        console.log("ntostr", n.toString(16));
         shaObj.update(pad_hex_string(n.toString(16))); // update the SHA with hex representation
     }
     var hash = shaObj.getHash("HEX");
@@ -133,7 +140,7 @@ var Pedersen = (function () {
             var test1 = this.g.modPow(r[i], this.p).equals(a[i].times(x.modPow(c, this.p)).mod(this.p));
             var test2 = this.public_key.modPow(r[i], this.p).equals(b[i].times(y[i].modPow(c, this.p)).mod(this.p));
             if (!(test1 && test2)) {
-                console.log("Could not log ZKP verify" + p_id);
+                console.log("Could not log ZKP verify", p_id);
                 verified = false;
                 break;
             }
@@ -201,57 +208,66 @@ var Voter = (function (_super) {
         var q = this.q;
         var generator_inverses = this.generator_inverses;
         for (var i = 0; i < this.num_votes; i += 1) {
-            var alpha = randint(this.q);
+            var alpha = randint(q);
             var v = this.vote[i];
-            var G = this.generators[i];
-            console.log("i:", i);
-            console.log("G:", G);
+            var G = this.generators[v];
             //var w = random_vector(this.num_votes, this.q); 
             var d = random_vector(this.options[i], q);
             var r = random_vector(this.options[i], q);
             var x = g.modPow(alpha, p);
             var y = h.modPow(alpha, p).times(G).mod(p);
-            console.log("h:", h.toString());
-            console.log("alpha:", alpha.toString());
-            console.log("p:", p.toString());
-            console.log("G:", G.toString());
-            console.log("y:", y.toString());
-            var u = q.subtract(alpha);
+            //var u = q.subtract(alpha);
             /*var Y = Array.apply(null, Array(this.options[i])).map(function (o, j){
                 return y.times(this.generator_inverses[j]);
             });*/
-            var Y = range_apply(this.options[i], function (j) { return y.times(generator_inverses[j]); });
-            var w = u.times(d[v]).add(r[v]).mod(q);
-            var a = range_apply(this.options[i], function (j) { return x.modPow(d[j], p).times(g.modPow(r[i], p)).mod(p); });
-            var b = range_apply(this.options[i], function (j) { return Y[j].modPow(d[j], p).times(h.modPow(r[i], p)).mod(p); });
+            var Y = range_apply(this.options[i], function (j) { return y.times(generator_inverses[j]).mod(p); });
+            //var w = u.times(d[v]).add(r[v]).mod(q);
+            var a = range_apply(this.options[i], function (j) { return x.modPow(d[j], p).times(g.modPow(r[j], p)).mod(p); });
+            var b = range_apply(this.options[i], function (j) { return Y[j].modPow(d[j], p).times(h.modPow(r[j], p)).mod(p); });
             var c = beacon(this.voter_id, [x, y, Y, a, b], q);
-            var prev_d = d[v];
-            var prev_r = r[v];
-            var d_sum = d.reduce(function (d1, d2) { return d1.add(d2); }).subtract(d[v]);
-            d[v] = c.subtract(d_sum).mod(q);
-            r[v] = w.subtract(u.times(d[v])).mod(q);
-            var new_r = alpha.times(prev_d.subtract(d[v])).add(prev_r).mod(q);
+            var prev_d = bigInt(d[v]);
+            var prev_r = bigInt(r[v]);
+            var d_sum = rmod(d.reduce(function (d1, d2) { return d1.add(d2).mod(q); }, bigInt.zero).subtract(d[v]), q);
+            d[v] = rmod(c.subtract(d_sum), q);
+            //r[v] = w.subtract(u.times(d[v])).mod(q);
+            console.log("(alpha, prev_d, new_d, prev_r, q)");
+            console.log(alpha.toString(), prev_d.toString(), d[v].toString(), prev_r.toString(), q.toString());
+            var new_r = rmod(alpha.times(prev_d.subtract(d[v])).add(prev_r), q);
+            console.log("new_r =", new_r.toString());
+            r[v] = new_r;
+            var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
+            var test2 = b[v].equals(Y[v].modPow(d[v], p).times(h.modPow(r[v], p)).mod(p));
+            console.log(test1, test2);
             this.commits[i] = { vote: { x: x, y: y }, Y: Y, a: a, b: b, d: d, r: r };
         }
         return this.commits;
     };
     Voter.prototype.verify_vote = function (p_id, commits) {
         var verified = true; //TODO: double check scope of this guy
+        var p = this.p;
+        var q = this.q;
+        var g = this.g;
+        var h = this.h;
         for (var i = 0; i < this.num_votes; i += 1) {
             var commit = commits[i];
-            var c = beacon(this.voter_id, [commit.vote.x, commit.vote.y, commit.Y,
-                commit.a, commit.b], this.q);
+            var c = beacon(p_id, [commit.vote.x, commit.vote.y, commit.Y,
+                commit.a, commit.b], q);
             if (!c.equals(commit.d.reduce(function (d1, d2) {
-                return d1.add(d2).mod(this.q);
-            }))) {
+                return d1.add(d2).mod(q);
+            }, bigInt.zero))) {
                 verified = false;
             }
+            console.log("test0:", verified);
             for (var j = 0; j < this.options[i]; j += 1) {
-                var test1 = commit.a[j].equals(commit.vote.x.modPow(commit.d[j], this.p).times(this.g.modPow(commit.r[j], this.p)).mod(this.p));
-                var test2 = commit.b[j].equals(commit.Y[j].modPow(commit.d[j], this.p).times(this.h.modPow(commit.r[j], this.p)).mod(this.p));
+                var test1 = commit.a[j].equals(commit.vote.x.modPow(commit.d[j], p).times(g.modPow(commit.r[j], p)).mod(p));
+                var test2 = commit.b[j].equals(commit.Y[j].modPow(commit.d[j], p).times(h.modPow(commit.r[j], p)).mod(p));
                 if (!(test1 && test2)) {
                     verified = false;
-                    console.log(p_id + "failed their verification on one of the a or b tests.");
+                    console.log(this.voter_id, "failed to verify", p_id, "on one of the a or b tests.");
+                    console.log(test1, test2);
+                }
+                else {
+                    console.log("passed one for", p_id);
                 }
                 if (!verified) {
                     break;
@@ -265,19 +281,21 @@ var Voter = (function (_super) {
                     this.global_votes[p_id] = Array(this.num_votes);
                 }
                 this.global_votes[p_id][i] = commit.vote;
+                console.log("Added", p_id, "'s vote to ", this.voter_id, "'s shares");
             }
         }
         if (!verified) {
             this.global_votes[p_id] = null; // remove their votes as they are not valid
-            console.log("Failed to verify" + p_id + "on verification. They might be cheating! Abort!");
+            console.log("Failed to verify", p_id, "on verification. They might be cheating! Abort!");
         }
         else {
-            console.log(p_id + "passed verification.");
+            console.log(p_id, "passed verification.");
             this.votes_verified[p_id] = true;
         }
         return verified;
     };
     Voter.prototype.calc_vote_step1 = function () {
+        var p = this.p;
         var all_verified = this.votes_verified.reduce(function (a, b) {
             return a && b;
         });
@@ -289,8 +307,9 @@ var Voter = (function (_super) {
             this.global_votes[this.voter_id] = this.encrypted_vote;
             var ws = new Array(this.num_votes);
             for (var i = 0; i < this.num_votes; i += 1) {
+                console.log("global_votes", this.global_votes);
                 var w = this.global_votes[i].reduce(function (a, b) {
-                    return { x: a.x.times(b.x).mod(this.p), y: a.y.times(b.y).mod(this.p) };
+                    return { x: a.x.times(b.x).mod(p), y: a.y.times(b.y).mod(p) };
                 });
                 ws[i] = w;
             }
@@ -322,7 +341,8 @@ function test_vote(num_voters, options) {
     //just a bunch of random votes
     //really shouldn't use random_vector() as that's for BigInteger but I'm super lazy
     //also really need to fix options[0]
-    var votes = range_apply(num_voters, function (i) { return random_vector(num_votes, bigInt(options[0])).map(function (x) { return x.toJSNumber(); }); });
+    //var votes = range_apply(num_voters, (i) => random_vector(num_votes, bigInt(options[0])).map((x) => x.toJSNumber()));
+    var votes = [[0], [1]];
     var voters = [];
     var vote_proofs = [];
     for (var i = 0; i < num_voters; i += 1) {
@@ -336,6 +356,9 @@ function test_vote(num_voters, options) {
     }
     for (var i = 0; i < num_voters; i += 1) {
         voters[i].make_public_key();
+        if (i == 1) {
+            console.assert(voters[1].public_key.equals(voters[0].public_key), "Mismatched public keys");
+        }
         console.log(voters[i].public_key.toString());
         vote_proofs.push(voters[i].encrypt_and_prove());
     }

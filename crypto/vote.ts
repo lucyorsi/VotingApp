@@ -1,5 +1,5 @@
 /// <reference path="big-integer.d.ts" />
-import Collections = require('typescript-collections');
+/// <reference path="jssha.d.ts" />
 
 "use strict";
 
@@ -22,7 +22,6 @@ function modProd(array: Array<BigInteger>, m: BigInteger){
 function hex_to_int(str: string):BigInteger {
     return bigInt(str, 16);
 }
-
 
 function randint(r: BigInteger):BigInteger {
     /* Returns a random integer on [0, r) */
@@ -57,7 +56,17 @@ function get_public_key_shares(): Array<BigInteger> {
 function beacon(p_id: number, array: Array<any>, m: BigInteger): BigInteger{
     //TODO: should p_id be harder to control? Like a much longer string?
     var all_nums = flatten(array);
-    var str = p_id + all_nums.reduce(function(a, b){ return a + b.toString(); });
+
+    var shaObj = new jsSHA("SHA-256", "HEX");
+    shaObj.update(p_id.toString(16));
+
+    for (let n of all_nums){
+        shaObj.update(n.toString(16)); // update the SHA with hex representation
+    }
+
+    var hash = shaObj.getHash("HEX");
+
+    return bigInt(hash, 16).mod(m);
 }
 
 interface Pedersen_commit{

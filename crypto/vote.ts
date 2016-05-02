@@ -3,6 +3,12 @@ import Collections = require('typescript-collections');
 
 "use strict";
 
+function flatten(array: Array<any>): Array<any> {
+    return array.reduce(function(new_array, rest){
+        return new_array.concat(Array.isArray(rest) ? flatten(rest) : rest);
+    }, []);
+}
+
 function modProd(array: Array<BigInteger>, m: BigInteger){
     /** Returns the product of the array mod m **/
 
@@ -21,7 +27,7 @@ function hex_to_int(str: string):BigInteger {
 function randint(r: BigInteger):BigInteger {
     /* Returns a random integer on [0, r) */
 
-    // efficiency may be really bad
+    //TODO: efficiency may be really bad
 
     var random32 = new Uint32Array(1); // this array will hold the window.crypto 
                                        // generated random value
@@ -49,7 +55,9 @@ function get_public_key_shares(): Array<BigInteger> {
 }
 
 function beacon(p_id: number, array: Array<any>, m: BigInteger): BigInteger{
-    return bigInt("2341234123412341234", 10); //TODO: make it real
+    //TODO: should p_id be harder to control? Like a much longer string?
+    var all_nums = flatten(array);
+    var str = p_id + all_nums.reduce(function(a, b){ return a + b.toString(); });
 }
 
 interface Pedersen_commit{

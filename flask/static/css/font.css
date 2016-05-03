@@ -1,0 +1,51 @@
+@font-face {
+    font-family: SourceSansPro;
+    src: url('font/SourceSansPro-Regular.otf');
+}
+@font-face {
+    font-family: SourceSansPro;
+    src: url('font/SourceSansPro-Bold.otf');
+    font-weight: bold;
+}
+@font-face {
+    font-family: SourceSansPro;
+    src: url('font/SourceSansPro-It.otf');
+    font-style: italic;
+}
+@font-face {
+    font-family: SourceSansPro;
+    src: url('font/SourceSansPro-BoldItalic.otf');
+    font-weight: bold;
+    font-style: italic;
+}
+@font-face {
+    font-family: SourceSansPro;
+    src: url('font/SourceSansPro-Light.otf');
+    font-weight: 300;
+}
+@font-face {
+    font-family: SourceSansPro;
+    src: url('font/SourceSansPro-LightItalic.otf');
+    font-style: italic;
+    font-weight: 300;
+}
+
+@font-face {
+    font-family: Akkurat;
+    src: url('font/Akkurat Regular.otf');
+}
+@font-face {
+    font-family: Akkurat;
+    src: url('font/Akkurat Bold.otf');
+    font-weight: bold;
+}
+@font-face {
+    font-family: Akkurat;
+    src: url('font/Akkurat Light Regular.otf');
+    font-weight: 300;
+}
+
+@font-face {
+    font-family: ProximaNovaSoft;
+    src: url('font/ProximaNovaSoft-Regular.otf');
+}

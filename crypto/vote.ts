@@ -314,6 +314,7 @@ class Voter extends Pedersen {
 
             var v = this.vote[i];
             var G = this.generators[v];
+            console.log(this.voter_id, "'s G:", G.toString());
 
             //var w = random_vector(this.num_votes, this.q); 
             var d = random_vector(this.options[i], q); 
@@ -322,6 +323,7 @@ class Voter extends Pedersen {
             var x = g.modPow(alpha, p);
             var y = h.modPow(alpha, p).times(G).mod(p);
             this.encrypted_vote[i] = {x: x, y: y};
+
 
             //var u = q.subtract(alpha);
 
@@ -347,10 +349,10 @@ class Voter extends Pedersen {
             d[v] = rmod(c.subtract(d_sum), q);
 
             //r[v] = w.subtract(u.times(d[v])).mod(q);
-            console.log("(alpha, prev_d, new_d, prev_r, q)");
-            console.log(alpha.toString(), prev_d.toString(), d[v].toString(), prev_r.toString(), q.toString());
+            //console.log("(alpha, prev_d, new_d, prev_r, q)");
+            //console.log(alpha.toString(), prev_d.toString(), d[v].toString(), prev_r.toString(), q.toString());
             var new_r = rmod(alpha.times(prev_d.subtract(d[v])).add(prev_r), q);
-            console.log("new_r =", new_r.toString());
+            //console.log("new_r =", new_r.toString());
             r[v] = new_r;
 
             var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
@@ -451,8 +453,8 @@ class Voter extends Pedersen {
             var ws = new Array(this.num_votes);
 
             for (var i = 0; i < this.num_votes; i += 1){
-                console.log("global_votes", this.global_votes);
-                var w = this.global_votes[i].reduce(function(a, b){
+                var vote_array = this.global_votes.map((voter) => voter[i]);
+                var w = vote_array.reduce(function(a, b){
                     return {x: a.x.times(b.x).mod(p), y: a.y.times(b.y).mod(p)};
                 });
 
@@ -479,7 +481,7 @@ class Voter extends Pedersen {
     }
 }
 
-function test_vote(num_voters = 2, options = [4]){
+function test_vote(num_voters = 4, options = [4]){
     var p = bigInt("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF", 16);
 
     var q = p.prev().divide(2);
@@ -491,9 +493,9 @@ function test_vote(num_voters = 2, options = [4]){
     //just a bunch of random votes
     //really shouldn't use random_vector() as that's for BigInteger but I'm super lazy
     //also really need to fix options[0]
-    //var votes = range_apply(num_voters, (i) => random_vector(num_votes, bigInt(options[0])).map((x) => x.toJSNumber()));
+    var votes = range_apply(num_voters, (i) => random_vector(num_votes, bigInt(options[0])).map((x) => x.toJSNumber()));
     
-    var votes = [[3], [2]];
+    //var votes = [[0], [3]];
 
     var voters = [];
 
@@ -517,7 +519,7 @@ function test_vote(num_voters = 2, options = [4]){
         if (i == 1){
             console.assert(voters[1].public_key.equals(voters[0].public_key), "Mismatched public keys");
         }
-        console.log(voters[i].public_key.toString());
+        //console.log(voters[i].public_key.toString());
         vote_proofs.push(voters[i].encrypt_and_prove());
     }
 
@@ -547,40 +549,26 @@ function test_vote(num_voters = 2, options = [4]){
         var o = voters[i].calc_vote_step2();
         outs[i] = o;
 
-        console.log(o.toString());
+        //console.log(o.toString());
     }
 
     var test_out = outs[0];
     for (var i = 0; i < num_voters; i += 1){
-        console.assert(test_out === (outs[i]), "Decryption resulted in different values.");
+        for (var j = 0; j < num_votes; j += 1){
+            console.assert(test_out[j].equals(outs[i][j]), "Decryption resulted in different values.");
+        }
     }
 
     console.log("Election result:", test_out);
 
-    var expected_out = range_apply(num_votes, (i) => votes.reduce((x, y) => x*y[i], 1));
+    var expected_out = range_apply(num_votes, (i) => votes.map((v) => v[i]).reduce((x, y) => x*generators[y].toJSNumber(), 1));
 
     console.log("Expected result:", expected_out);
 
-    console.assert(test_out === expected_out, "Bad out");
+    for (var i = 0; i < num_votes; i += 1){
+        console.assert(test_out[i].equals(expected_out[i]), "Bad out");
+    }
 
     console.log("Success!");
 }
-
-
-
-    
-
-
-
-
-
-
-
-
-
-          
-
-
-
-
 

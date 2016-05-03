@@ -16,7 +16,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
    def on_close(self): 
       print("websocket closed")
 
-class IndexPageHandler(tornado.web.RequestHandler):
+lass IndexPageHandler(tornado.web.RequestHandler):
    def get(self):
       self.render("index.html")
 

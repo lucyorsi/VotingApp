@@ -1,0 +1,135 @@
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/*theme color:
+dark blue: #2B616D
+light blue: #B2DBD5
+white: #FFFFFF
+brick-red: #FA8D62
+warm-grey: #BAA896;
+fog: #D4DDE1;
+*/
+
+a:hover{
+    color: #B2DBD5;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.navi{
+    font-family: Akkurat,Helvetica,Arial,sans-serif;
+    height: 60px;
+}
+
+.navi-proj-name{
+    font-family: Akkurat,Helvetica,Arial,sans-serif;
+    font-weight: bold;
+    letter-spacing: 0px;
+    float: left;
+    height: 100%;
+}
+
+.navi-element-group{
+    float: right;
+}
+
+.navi-element{
+    font-family: Akkurat,Helvetica,Arial,sans-serif;
+    float: right;
+    height: 100%;
+    width: auto;
+    margin-left: 20px;
+    margin-top: 25px;
+    font-size: 115%;
+    color: #484848;
+}
+
+.quick-start{
+    margin-top: 50px;
+    height: 200px;
+}
+
+.start-now{
+    font-size: 400%;
+    font-weight: 300;
+    color: black;
+    float: right;
+    width: 100%;
+    text-align: right;
+}
+
+.explanation-1{
+    color: #BAA896;
+    float: right;
+    margin: 0px;
+    font-family: Akkurat,Helvetica,Arial,sans-serif;
+    font-style: italic;
+    font-size: 120%;
+    width: 100%;
+    text-align: right;
+}
+
+.btn-big{
+    font-weight: bold;
+    color: #FFFFFF;
+    width: 180px;
+    text-align: center;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 120%;
+    border: 0px;
+}
+
+.btn-vote{
+    background-color: #FA8D62;
+    margin-top: 20px;
+}
+
+.btn-vote:hover{
+    color:white;
+}
+
+.btn-init{
+    background-color: #B2DBD5;
+}
+
+.btn-init:hover{
+    color:white;
+}
+
+.home-icon{
+    padding: 35px;
+}
+
+.system-explanation{
+    color: black;
+    font-weight: 300;
+    font-family: Akkurat,Helvetica,Arial,sans-serif;
+    width: 60%;
+    margin: auto;
+    text-align: center;
+}
+
+.circle{
+    margin: auto;
+    width: 140px;
+    height: 140px;
+    border-radius: 70px;
+}
+
+.function-intro{
+    border: 5px;
+    border-radius: 5px;
+    color: #FFFFFF;
+}
+
+.adjust-1{
+    padding-left: 12px;
+}
+
+.adjust-2:hover{
+    color: white;
+}

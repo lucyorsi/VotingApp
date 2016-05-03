@@ -1,43 +1,41 @@
 # all the imports
 import os
-from sqlite3 import dbapi2 as sqlite3
 from flask import Flask, render_template, url_for, request, session, g, redirect, abort, flash
-from contextlib import closing
+    
+# from flask.ext.mysql import MySQL
 
 app = Flask(__name__)
 
-# Load default config and override config from an environment variable
-app.config.update(dict(
-    DATABASE=os.path.join(app.root_path, 'vote.db'),
-    DEBUG=True,
-    SECRET_KEY='development key',
-    USERNAME='admin',
-    PASSWORD='default'
-))
-app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+# mysql = MySQL()
 
-def connect_db():
-    return sqlite3.connect(app.config['DATABASE'])
+# # MySQL configurations
+# app.config['MYSQL_DATABASE_USER'] = 'admin'
+# app.config['MYSQL_DATABASE_PASSWORD'] = 'csci4140'
+# app.config['MYSQL_DATABASE_DB'] = 'AnotherVote'
+# app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+# mysql.init_app(app)
 
-def init_db():
-    with closing(connect_db()) as db:
-        with app.open_resource('init.sql', mode='r') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
-
-@app.before_request
-def before_request():
-    g.db = connect_db()
-
-@app.teardown_request
-def teardown_request(exception):
-    db = getattr(g, 'db', None)
-    if db is not None:
-        db.close()
+# conn = mysql.connect()
+# cursor = conn.cursor()
+# cursor.execute('''create table setup_vote (
+#   voteID integer primary key autoincrement,
+#   name text not null,
+#   expire_date date not null,
+#   expire_time time not null,
+#   vote_method integer not null,
+#   candidates_upload_method integer not null,
+#   candidates_input text not null,
+#   voters_upload_method integer not null,
+#   voters_input text not null
+# );''')
+# conn.commit()
+# cursor.execute('''select * from setup_vote''')
+# data = cursor.fetchall()
+# print data
 
 @app.route("/")
 def main():
-	return render_template('index.html')
+    return render_template('index.html')
 
 @app.route("/setup")
 def setup():
@@ -47,15 +45,11 @@ def setup():
 def setup_compelete():
     return render_template('setup_compelete.html')
 
-@app.route("/results/<int:vote_id>")
-def show_results(vote_id):
-	return "hello"
-	#return render_template('results.html', vote_id=vote_id);
+# @app.route("/v1_setup", methods=["POST", "GET"])
+# def results(vote_id):
 
-@app.route("/results/<int:vote_id>", methods=["POST", "GET"])
-def results(vote_id):
-	return vote_id
+#   return 
 
 if __name__ == "__main__":
-	app.debug = True
-	app.run()
+    app.debug = True
+    app.run(host='0.0.0.0', port=80)

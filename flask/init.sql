@@ -31,7 +31,7 @@ create table qualified_voters(
 create table candidates_list (
 	candidate_id integer primary key auto_increment,
 	vote_id integer not null ,
-	canditate_name varchar(255) not null,
+	candidate_name varchar(255) not null,
 	foreign key (vote_id) references votes_info(vote_id)
 );
 

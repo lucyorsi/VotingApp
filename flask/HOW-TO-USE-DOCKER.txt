@@ -106,3 +106,5 @@ show tables;
 drop databases DB_NAME;
 
 DROP TABLE IF EXISTS TABLE_NAME;
+
+

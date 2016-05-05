@@ -60,7 +60,7 @@
 
             <form enctype="multipart/form-data" action="/create_vote" method="POST">
 
-                {%if secure_level is equalto 1 %}
+                {% if secure_level is equalto 1 %}
                     <input type="number" style="display:none;" name="secure_level" value="1">
                 {% else %}
                     <input type="number" style="display:none;" name="secure_level" value="2">
@@ -71,17 +71,17 @@
                 <br><br>
 
                 <label class="my_label"> Expiry Date:   </label>
-                <input type="text" name="expire_time" class="form-control" data-dtp="dtp_A0qe6" style="display:inline;width:300px;">
+                <input type="text" name="expire_time" id="min-date" class="form-control" data-dtp="dtp_A0qe6" style="display:inline;width:300px;">
                 <br><br>
 
                 <label class="my_label"> Choose a voting method:   </label>
                 <select class="form-control" style="display:inline;width:300px;" name="vote_method">
-                    <option value="single">Single</option>
-                    <option value="ranking">Ranking</option>
-                    <option value="weight">Weight</option>
-                    <option value="majority">Majority Approval</option>
-                    <option value="random">Random</option>
-                    <option value="weighted_random">Weighted Random</option>
+                    <option value="1">Single</option>
+                    <option value="2">Ranking</option>
+                    <option value="3">Weight</option>
+                    <option value="4">Majority</option>
+                    <!-- <option value="random">Random</option>
+                    <option value="weighted_random">Weighted Random</option> -->
                 </select>
                 <br><br>
 

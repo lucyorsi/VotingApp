@@ -1,5 +1,6 @@
 from flask.ext.mysql import MySQL
 import app as a
+import time
 
 app = a.app
 
@@ -42,6 +43,7 @@ def create_database():
 		creator_id integer,
 		expire_time datetime not null,
 		vote_method integer not null,
+		secure_level integer not null, 
 		foreign key (creator_id) references user_info(user_id)
 	);''')
 	conn.commit()
@@ -55,7 +57,7 @@ def create_database():
 	cursor.execute('''create table candidates_list (
 		candidate_id integer primary key auto_increment,
 		vote_id integer not null ,
-		canditate_name varchar(255) not null,
+		candidate_name varchar(255) not null,
 		foreign key (vote_id) references votes_info(vote_id)
 	);''')
 	conn.commit()
@@ -73,7 +75,50 @@ def create_database():
 
 	return
 
-def create_vote():
+def create_vote(vote_name, expire_time, vote_method, candidate_upload_text):
 	cursor = conn.cursor()
-	cursor.execute('''DROP TABLE IF EXISTS ballots_info;''')
+	cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level) VALUES (%s, %s, %s, 1)", (vote_name, expire_time, vote_method))
 	conn.commit()
+
+	vote_id = cursor.lastrowid
+	for index in range(len(candidate_upload_text)):
+		cursor.execute("INSERT INTO candidates_list (vote_id, candidate_name) VALUES(%s, %s)", (vote_id, candidate_upload_text[index]))
+		conn.commit()
+	cursor.close()
+
+	return vote_id
+
+def check_vote_method(vote_id):
+	cursor = conn.cursor()
+	cursor.execute("SELECT * FROM votes_info WHERE vote_id=%s", (vote_id))
+	conn.commit()
+
+	results = cursor.rowcount
+	if results != 0:
+		results = cursor.fetchone()
+
+	cursor.close()
+
+	return results
+
+def get_candidate_list(vote_id):
+	cursor = conn.cursor()
+	cursor.execute("SELECT * FROM candidates_list WHERE vote_id=%s", (vote_id))
+	conn.commit()
+
+	results = cursor.fetchall()
+
+	cursor.close()
+
+	return results
+
+def count_ballot(candidate_id):
+	cursor = conn.cursor()
+	cursor.execute("SELECT * FROM ballots_info WHERE candidate_id=%s", (candidate_id))
+	conn.commit()
+
+	results = cursor.rowcount
+
+	cursor.close()
+
+	return results

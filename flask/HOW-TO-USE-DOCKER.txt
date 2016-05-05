@@ -18,7 +18,7 @@ STOP CONTAINER:
 docker stop CONTAINER_ID
 
 START A STOPPED CONTAINER:
-docker start 
+docker start
 
 Tips for debugging. If you get an "Internal Server Error", you can find the server log by first logging into the shell of the web server using:
 docker exec -it [WEB_SERVER_CONTAINER_NAME] /bin/bash
@@ -64,6 +64,7 @@ rm -r DIR-NAME (HAVE PROMPT)
 rm -rf DIR-NAME (WITHOUT PROMP
 
 ----------------------------------------
+
 docker run -i -t --name [CONTAINER_NAME] [image_name] /bin/bash
 
 docker run -i -t --name 4140-container lucyorsi/igroup-votingserver /bin/bash
@@ -71,10 +72,37 @@ docker run -i -t --name 4140-container lucyorsi/igroup-votingserver /bin/bash
 docker exec -it [container-id] /bin/bash
 docker exec -it 12738e6c5a2f /bin/bash
 
+apt-get install pyhton
+
+apt-get install python-pip
+
+apt-get install mysql-server
+
 python ez_setup.py
 
 apt-get install libmysqlclient-dev
 
+apt-get install python-mysqldb
+
+pip install flask
+
 pip install flask-mysql
 
-docker run -it -d -p 80:80 --name volumn-container -v /c/Users/songyang/Desktop/voting-system/flask/:/tmp/ lucyorsi/igroup-votingserver
+docker run -it -d -p 5000:5000 --name 4140 -v /home/ysong4/Documents/project-igroup/flask/:/tmp/ lucyorsi/igroup-votingserver
+
+
+-------------------------Usage of SQL--------------------
+
+mysql -u root -p
+
+create database DB_NAME;
+
+show databases;
+
+use [DATABASE_NAME];
+
+show tables;
+
+drop databases DB_NAME;
+
+DROP TABLE IF EXISTS TABLE_NAME;

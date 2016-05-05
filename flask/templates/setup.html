@@ -18,10 +18,11 @@
         <link rel="stylesheet" href=".{{ url_for('static', filename='css/setup.css') }}">
 
         <!-- This is for date and time picker -->
-        <link rel="stylesheet" href="./css/bootstrap-material-datetimepicker.css">
-        <script src="http://momentjs.com/downloads/moment-with-locales.min.js"></script>
+        <link rel="stylesheet" href=".{{ url_for('static', filename='css/bootstrap-material-datetimepicker.css') }}">
+        <script type="text/javascript" src="http://momentjs.com/downloads/moment-with-locales.min.js"></script>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-        <script src="./js/bootstrap-material-datetimepicker.js"></script>
+        <script src=".{{ url_for('static', filename='js/bootstrap-material-datetimepicker.js') }}"></script>
+        
 
         <!-- This is for navigation bar and font -->
         <link rel="stylesheet" href=".{{ url_for('static', filename='css/font.css') }}">
@@ -53,13 +54,24 @@
 
             <h1 class="my-h1">Initiate a new vote</h1>
 
-            <form enctype="multipart/form-data" action="" method="POST">
+            {%if warning %}
+                <h1 class="my-h1">{{warning}}</h1>
+            {% endif %}
+
+            <form enctype="multipart/form-data" action="/create_vote" method="POST">
+
+                {%if secure_level is equalto 1 %}
+                    <input type="number" style="display:none;" name="secure_level" value="1">
+                {% else %}
+                    <input type="number" style="display:none;" name="secure_level" value="2">
+                {% endif %}
+
                 <label class="my_label"> Vote Name: </label>
                 <input type="text" class="form-control" style="display:inline;width:300px;" name="vote_name" placeholder="Vote Name">
                 <br><br>
 
                 <label class="my_label"> Expiry Date:   </label>
-                <input type="text" id="min-date" class="form-control" data-dtp="dtp_A0qe6" style="display:inline;width:300px;">
+                <input type="text" name="expire_time" class="form-control" data-dtp="dtp_A0qe6" style="display:inline;width:300px;">
                 <br><br>
 
                 <label class="my_label"> Choose a voting method:   </label>
@@ -123,6 +135,6 @@
         </div>
     </body>
 
-    <script src="./js/setup.js"></script>
+    <script src=".{{ url_for('static', filename='js/setup.js') }}"></script>
 
 </html>

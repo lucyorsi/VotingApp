@@ -29,10 +29,13 @@ def setup():
 		secure_level = 1
 		return render_template('setup.html', **locals())
 
+
+
 @app.route("/cast_a_vote/<vote_id>")
 def cast_a_vote(vote_id):
 	results = db_func.check_vote_method(vote_id)
 
+	# Check whether vote_id exists
 	if (results == 0):
 		warning = "Sorry, the vote does not exist."
 		return render_template('sorry.html', **locals())
@@ -41,35 +44,85 @@ def cast_a_vote(vote_id):
 		expire_time = results[3]
 		vote_method = results[4]
 
-	if vote_method == 1:
+	results = db_func.get_candidate_list(vote_id)
+	candidate_num = len(results)
+	candidate_list = {}
+	i = 0
+	for row in results:
+		candidate_list[i, 0] = row[2] #candidate name
+		candidate_list[i, 1] = row[0] #candidate id
+		i = i + 1
+	if (vote_method == 1):
+		return render_template('vote_single.html', **locals())
+	elif (vote_method == 2):
+		return render_template('vote_ranking.html', **locals())
+	elif (vote_method == 3):
+		return render_template('vote_weight.html', **locals())
+	elif (vote_method == 4):
+		return render_template('vote_majority.html', **locals())
+
+
+@app.route("/receive_a_vote", methods=["POST"])
+def receive_a_vote():
+	vote_method = request.form['vote_method']
+	vote_method = int(vote_method)
+	# print (type(vote_method) is str)
+	# print (type(vote_method) is int)
+	print vote_method
+
+	vote_name = request.form['vote_name']
+	vote_id = int(request.form['vote_id'])
+	if (vote_method == 1):
+		candidate_id = int(request.form['input_candidate'])
+		db_func.cast_single_vote(vote_id, candidate_id)
+
+	elif (vote_method == 3):
+		candidate_num = int(request.form['candidate_num'])
 		results = db_func.get_candidate_list(vote_id)
-		candidate_num = len(results)
 		candidate_list = {}
 		i = 0
 		for row in results:
 			candidate_list[i, 0] = row[2] #candidate name
 			candidate_list[i, 1] = row[0] #candidate id
+			candidate_list[i, 2] = request.form[str(candidate_list[i, 1])] #candidate points
 			i = i + 1
-		return render_template('vote_single.html', **locals())
+		# Check total points not bigger than 100
+		total_point = 0
+		for i in range(candidate_num):
+			total_point = total_point + int(candidate_list[i, 2])
+		print "total point: " + str(total_point)
+		if (total_point > 100):
+			warning = "Your total points should be less than or equal to 100."
+			return render_template('vote_weight.html', **locals())
+		# Insert to database
+		for i in range(candidate_num):
+			db_func.cast_weight_vote(vote_id, candidate_list[i, 1], candidate_list[i, 2])
 
-@app.route("/receive_a_vote", methods=["POST"])
-def receive_a_vote():
-	vote_method = request.form['vote_method']
+	elif (vote_method == 4):
+		candidate_num = int(request.form['candidate_num'])
+		results = db_func.get_candidate_list(vote_id)
+		candidate_list = {}
+		i = 0
+		for row in results:
+			candidate_list[i, 0] = row[2] #candidate name
+			candidate_list[i, 1] = row[0] #candidate id
+			candidate_list[i, 2] = request.form[str(candidate_list[i, 1])] #candidate yes_no value
+			i = i + 1
+		# Insert to database
+		for i in range(candidate_num):
+			db_func.cast_majority_vote(vote_id, candidate_list[i, 1], candidate_list[i, 2])
 
-	if vote_method == 1:
-		vote_name = request.form['vote_name']
-		vote_id = request.form['vote_id']
-		candidate_id = request.form['input_candidate']
-		print vote_id
-		print candidate_id
-		
-		return render_template('thanks.html', **locals())
+
+	return render_template('thanks.html', **locals())
+
+
 
 
 @app.route("/view_result/<vote_id>")
 def view_result(vote_id):
 	results = db_func.check_vote_method(vote_id)
 
+	# Check whether vote_id exists
 	if (results == 0):
 		warning = "Sorry, the vote does not exist."
 		return render_template('sorry.html', **locals())
@@ -78,19 +131,19 @@ def view_result(vote_id):
 		expire_time = results[3]
 		vote_method = results[4]
 
+	results = db_func.get_candidate_list(vote_id)
+
+	candidate_num = len(results)
+	result_table = {}
+
+	index = 0
+	for row in results:
+		result_table[index, 0] = row[0] #candidate id
+		result_table[index, 1] = row[2] #candidate name
+		index = index + 1
+
 	if vote_method == 1:
 		vote_method = "Single"
-		results = db_func.get_candidate_list(vote_id)
-
-		candidate_num = len(results)
-		result_table = {}
-
-		index = 0
-		for row in results:
-			result_table[index, 0] = row[0] #candidate id
-			result_table[index, 1] = row[2] #candidate name
-			index = index + 1
-
 		for i in range(candidate_num):
 			results = db_func.count_ballot(result_table[i, 0]) #candidate id
 			result_table[i, 2] = results 
@@ -100,10 +153,25 @@ def view_result(vote_id):
 
 	elif vote_method == 3:
 		vote_method = "Weight"
+		for i in range(candidate_num):
+			result_table[i, 2] = db_func.count_candidate_total_point(vote_id, result_table[i, 0])
 
 	elif vote_method == 4:
 		vote_method = "Majority"
+		for i in range(candidate_num):
+			result_table[i, 2] = db_func.count_candidate_total_yes(vote_id, result_table[i, 0])
+			print result_table[i, 2]
 
+	most_vote = result_table[0, 2]
+	for i in range(candidate_num):
+		if (most_vote < result_table[i, 2]):
+			most_vote = result_table[i, 2]
+	winner = {}
+	count_winner = 0
+	for i in range(candidate_num):
+		if (most_vote == result_table[i, 2]):
+			winner[count_winner] = result_table[i, 1]
+			count_winner = count_winner + 1
 
 	return render_template('results.html', **locals())
 
@@ -118,7 +186,7 @@ def create_vote():
 		expire_time = request.form['expire_time']
 		vote_method = request.form['vote_method']
 		secure_level = request.form['secure_level']
-		candidate_upload_type = request.form['candidate_upload_type']
+		# candidate_upload_type = request.form['candidate_upload_type']
 		candidate_upload_text = request.form['candidate_upload_text']
 
 		if (not vote_name):

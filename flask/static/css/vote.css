@@ -13,23 +13,37 @@
 }
 
 .table_elem_1{
-    color: #baa896;
+    background:#baa896;
+    color: white; 
 }
 
-.table_elem_1:hover{
-    cursor: pointer;
-    background: #baa896;
-    color: white;
+.input_1{
+    background:#baa896;
+    color: white; 
+    border:0px;
+    font-size: 120%;
+}
+
+.input_1:hover{
+    cursor:pointer;
+    color: black;
 }
 
 .table_elem_2{
-    color: #a5c3cf;
+    background:white;
+    color: #baa896;
 }
 
-.table_elem_2:hover{
-    cursor: pointer;
-    background: #a5c3cf;
-    color: white;
+.input_2{
+    background:white;
+    color: #baa896; 
+    border:0px;
+    font-size: 120%;
+}
+
+.input_2:hover{
+    color: black;
+    cursor:pointer;
 }
 
 .table_elem_3{

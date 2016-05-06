@@ -55,20 +55,21 @@
 
 		<form enctype="multipart/form-data" action="/receive_a_vote" method="POST">
 		<table class="col-md-12 col-sm-12 col-xs-12 table my_table">
+			<select style="display:none;">
 			<tr>
 				<th class="table_heading">Candidates</th>
 				<input style="display:none;" name="vote_name" value="{{vote_name}}">
-				<input style="display:none;" name="vote_id" value="{{vote_id}}">
-				<input style="display:none;" name="vote_method" value="{{vote_method}}">
+				<input style="display:none;" type="number" name="vote_id" value="{{vote_id}}">
+				<input style="display:none;" type="number" name="vote_method" value="{{vote_method}}">
 			</tr>
 			{% for i in range(candidate_num) %}
                 {% if (i/2 == 0) %}
 	                <tr>
-						<td class="table_elem_1" name="input_candidate" value="{{candidate_list[i, 1]}}"><input style="background:white; border:0px;" type="submit" value="{{candidate_list[i, 0]}}"></td>
+						<td class="table_elem_1" ><button type="submit" class="input_1 hvr-grow" name="input_candidate" value="{{candidate_list[i, 1]}}" >{{candidate_list[i, 0]}}</button></td>
 					</tr>
 				{% else %}
 					<tr>
-						<td class="table_elem_2" name="input_candidate" value="{{candidate_list[i, 1]}}">{{candidate_list[i, 0]}}</td>
+						<td class="table_elem_2" ><button type="submit" class="input_2 hvr-grow" name="input_candidate" value="{{candidate_list[i, 1]}}" >{{candidate_list[i, 0]}}</button></td>
 					</tr>
 				{% endif %}
             {% endfor %}
@@ -76,7 +77,7 @@
 		</form>
 
 		<div class="col-md-12 col-sm-12 col-xs-12">
-			<button class= "btn-big btn-return-1 hvr-grow"> Return to homepage </button>
+			<a class= "btn-big btn-return-1 hvr-grow" href="/"> Return to homepage </a>
 		</div>
 
 	</div>

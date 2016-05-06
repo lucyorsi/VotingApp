@@ -1,9 +1,9 @@
-document.getElementById("uploadBtn").onchange = function () {
-    document.getElementById("uploadFile").value = this.value;
-};
-document.getElementById("uploadBtn2").onchange = function () {
-    document.getElementById("uploadFile2").value = this.value;
-};
+// document.getElementById("uploadBtn").onchange = function () {
+//     document.getElementById("uploadFile").value = this.value;
+// };
+// document.getElementById("uploadBtn2").onchange = function () {
+//     document.getElementById("uploadFile2").value = this.value;
+// };
 
 $('#min-date').bootstrapMaterialDatePicker({ format : 'DD/MM/YYYY HH:mm', minDate : new Date() });
 

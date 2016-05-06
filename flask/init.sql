@@ -39,6 +39,8 @@ create table ballots_info (
 	ballot_id integer primary key auto_increment,
 	vote_id integer not null,
 	candidate_id integer not null,
+	candidate_point integer,
+	yes_no integer,
 	voter_id integer,
 	foreign key (candidate_id) references candidates_list(candidate_id),
 	foreign key (voter_id) references user_info(user_id)

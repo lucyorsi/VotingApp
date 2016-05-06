@@ -12,14 +12,14 @@
 	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 
-	<link href="css/hover.css" rel="stylesheet" media="all">
+	<link rel="stylesheet" href="..{{ url_for('static', filename='css/hover.css') }}">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
-	<link rel="stylesheet" href="./css/font.css">
-	<link rel="stylesheet" href="./css/index.css">
-	<link rel="stylesheet" href="./css/setup_complete.css">
-	<link rel="stylesheet" href="./css/vote.css">
+	<link rel="stylesheet" href="..{{ url_for('static', filename='css/font.css') }}">
+    <link rel="stylesheet" href="..{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="..{{ url_for('static', filename='css/setup_complete.css') }}">
+    <link rel="stylesheet" href="..{{ url_for('static', filename='css/vote.css') }}">
 
 </head>
 
@@ -47,40 +47,33 @@
 
     <div class="row">
 
-    	<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading">Vote Name</h1>
+    	<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading">{{vote_name}}</h1>
 
 		<div class="col-md-12 col-sm-12 col-xs-12">
 			<br>
 			<p class="my_p_1" >Please distribute your points for each candidate.</p>
 			<br>
+			{%if warning %}
+				<p class="my_p_1" style="color: #e38b75;">{{warning}}</p>
+            {% endif %}
 		</div>
 
-		<form enctype="multipart/form-data" action="" method="POST">
+		<form enctype="multipart/form-data" action="/receive_a_vote" method="POST">
 			<table class="col-md-12 col-sm-12 col-xs-12 table my_table">
 				<tr>
 					<th class="table_heading">Candidates</th>
 					<th class="table_heading">Points(Total of 100)</th>
+					<input style="display:none;" name="vote_name" value="{{vote_name}}">
+					<input style="display:none;" type="number" name="vote_id" value="{{vote_id}}">
+					<input style="display:none;" type="number" name="vote_method" value="{{vote_method}}">
+					<input style="display:none;" type="number" name="candidate_num" value="{{candidate_num}}">
 				</tr>
+				{% for i in range(candidate_num) %}
 				<tr>
-					<td class="table_elem_3">1. XXX XXX</td>
-					<td><input type="number" class="form-control table_input" name="candidate_1_weight" min="0" max="100"></td>
+					<td class="table_elem_3">{{candidate_list[i, 0]}}</td>
+					<td><input type="number" class="form-control table_input" name="{{candidate_list[i, 1]}}" min="0" max="100" step="1" value="0"></td>
 				</tr>
-				<tr>
-					<td class="table_elem_3">2. XXX XXX</td>
-					<td><input type="number" class="form-control table_input" name="candidate_2_weight" min="0" max="100"></td>
-				</tr>
-				<tr>
-					<td class="table_elem_3">3. XXX XXX</td>
-					<td><input type="number" class="form-control table_input" name="candidate_3_weight" min="0" max="100"></td>
-				</tr>
-				<tr>
-					<td class="table_elem_3">4. XXX XXX</td>
-					<td><input type="number" class="form-control table_input" name="candidate_4_weight" min="0" max="100"></td>
-				</tr>
-				<tr>
-					<td class="table_elem_3">5. XXX XXX</td>
-					<td><input type="number" class="form-control table_input" name="candidate_5_weight" min="0" max="100"></td>
-				</tr>
+				{% endfor %}
 			</table>
 			<div class="col-md-12 col-sm-12 col-xs-12">
 				<br>
@@ -88,7 +81,7 @@
 			<input class="col-md-12 col-sm-12 col-xs-12 btn-big btn-view hvr-grow" type="submit" value="Submit">
 		</form>
 		<div class="col-md-12 col-sm-12 col-xs-12">
-			<button class= "btn-big btn-return-1 hvr-grow"> Return to homepage </button>
+			<a class= "btn-big btn-return-1 hvr-grow" href="/"> Return to homepage </a>
 		</div>
 
 	</div>

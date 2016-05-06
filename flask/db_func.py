@@ -65,7 +65,9 @@ def create_database():
 		ballot_id integer primary key auto_increment,
 		vote_id integer not null,
 		candidate_id integer not null,
+		candidate_point integer,
 		voter_id integer,
+		yes_no integer,
 		foreign key (candidate_id) references candidates_list(candidate_id),
 		foreign key (voter_id) references user_info(user_id)
 	);''')
@@ -98,7 +100,6 @@ def check_vote_method(vote_id):
 		results = cursor.fetchone()
 
 	cursor.close()
-
 	return results
 
 def get_candidate_list(vote_id):
@@ -109,7 +110,6 @@ def get_candidate_list(vote_id):
 	results = cursor.fetchall()
 
 	cursor.close()
-
 	return results
 
 def count_ballot(candidate_id):
@@ -120,5 +120,43 @@ def count_ballot(candidate_id):
 	results = cursor.rowcount
 
 	cursor.close()
-
 	return results
+
+def cast_single_vote(vote_id, candidate_id):
+	cursor = conn.cursor()
+	cursor.execute("INSERT INTO ballots_info (vote_id, candidate_id) VALUES(%s, %s)", (vote_id, candidate_id))
+	conn.commit()
+	cursor.close()
+
+def cast_weight_vote(vote_id, candidate_id, candidate_point):
+	cursor = conn.cursor()
+	cursor.execute("INSERT INTO ballots_info (vote_id, candidate_id, candidate_point) VALUES(%s, %s, %s)", (vote_id, candidate_id, candidate_point))
+	conn.commit()
+	cursor.close()
+
+def count_candidate_total_point(vote_id, candidate_id):
+	cursor = conn.cursor()
+	cursor.execute("SELECT * FROM ballots_info WHERE candidate_id=%s AND vote_id=%s", (candidate_id, vote_id))
+	conn.commit()
+
+	results = cursor.fetchall()
+	total_points = 0
+	for row in results:
+		total_points = total_points + int(row[3])
+	cursor.close()
+	return total_points
+
+def cast_majority_vote(vote_id, candidate_id, yes_no):
+	cursor = conn.cursor()
+	cursor.execute("INSERT INTO ballots_info (vote_id, candidate_id, yes_no) VALUES(%s, %s, %s)", (vote_id, candidate_id, yes_no))
+	conn.commit()
+	cursor.close()
+
+def count_candidate_total_yes(vote_id, candidate_id):
+	cursor = conn.cursor()
+	cursor.execute("SELECT * FROM ballots_info WHERE candidate_id=%s AND vote_id=%s AND yes_no=%s", (candidate_id, vote_id, '1'))
+	conn.commit()
+
+	total_yes = cursor.rowcount
+	cursor.close()
+	return total_yes

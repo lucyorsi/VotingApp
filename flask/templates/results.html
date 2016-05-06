@@ -48,36 +48,55 @@
 		<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading">Live Results</h1>
 		<div class="col-md-12 col-sm-12 col-xs-12">
 			<br>
-			<p class="my_p_1 my_p_2"> Vote Name: {{vote_name}}</p>
+			<p class="my_p_1 my_p_2"> Vote Name: <span style="color:black">{{vote_name}} </span></p>
 			<br>
-			<p class="my_p_1 my_p_2"> Expire Date: {{expire_time}}</p>
+			<p class="my_p_1 my_p_2"> Expire Date: <span style="color:black">{{expire_time}}</span></p>
 			<br>
-			<p class="my_p_1 my_p_2"> Vote Method: {{vote_method}}</p>
+			<p class="my_p_1 my_p_2"> Vote Method: <span style="color:black">{{vote_method}}</span></p>
 
-            {% if vote_method is equalto 1 %}
+            {% if vote_method is equalto "Single" %}
                 <br>
-                <p class="my_p_1 my_p_2"> Current results: {{winner}}</p>
-                {% for i in range(candidate_num) %}
-                    <p class="my_p_1 my_p_2"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
+                <p class="my_p_1 my_p_2"> Current winner:</p>
+                {% for i in range(count_winner) %}
+                    <p class="my_p_1 my_p_2" style="color:black"> {{winner[i]}}</p>
                 {% endfor %}
-            {% elif vote_method is equalto 2 %}
+                {% for i in range(candidate_num) %}
+                    <p class="my_p_1 my_p_2" style="color:black"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
+                {% endfor %}
+            {% elif vote_method is equalto "Ranking" %}
                 <br>
-                <p class="my_p_1 my_p_2"> Current results: {{winner}}</p>
-            {% elif vote_method is equalto 3 %}
+                <p class="my_p_1 my_p_2"> Current winner: {{winner}}</p>
+            {% elif vote_method is equalto "Weight" %}
                 <br>
-                <p class="my_p_1 my_p_2"> Current results: {{winner}}</p>
-            {% elif vote_method is equalto 4 %}
+                <p class="my_p_1 my_p_2"> Current winner:</p>
+                {% for i in range(count_winner) %}
+                    <p class="my_p_1 my_p_2" style="color:black"> {{winner[i]}}</p>
+                {% endfor %}
                 <br>
-                <p class="my_p_1 my_p_2"> Current results: {{winner}}</p>
+                <p class="my_p_1 my_p_2"> Each candidates' total points</p>
+                {% for i in range(candidate_num) %}
+                    <p class="my_p_1 my_p_2" style="color:black"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
+                {% endfor %}
+            {% elif vote_method is equalto "Majority" %}
+                <br>
+                <p class="my_p_1 my_p_2"> Current winner:</p>
+                {% for i in range(count_winner) %}
+                    <p class="my_p_1 my_p_2" style="color:black"> {{winner[i]}}</p>
+                {% endfor %}
+                <br>
+                <p class="my_p_1 my_p_2"> Each candidates' total YES</p>
+                {% for i in range(candidate_num) %}
+                    <p class="my_p_1 my_p_2" style="color:black"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
+                {% endfor %}
             {% endif %}
 
 		</div>
 
 		<div class="col-md-12 col-sm-12 col-xs-12">
-			<button class= "btn-big btn-view hvr-grow"> End The Vote </button>
+			<a class= "btn-big btn-view hvr-grow"> End The Vote </a>
 		</div>
 		<div class="col-md-12 col-sm-12 col-xs-12">
-			<button class= "btn-big btn-return-1 hvr-grow"> Return to homepage </button>
+			<a class= "btn-big btn-return-1 hvr-grow" href="/"> Return to homepage </a>
 		</div>
 
 	</div>

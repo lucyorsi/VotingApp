@@ -268,7 +268,7 @@ function range_apply(r: number, f: (n: number) => any): Array<any> {
     });
 }
 
-class Voter extends Pedersen {
+class CryptoVoter extends Pedersen {
     votes_verified: Array<boolean>;
     generator_inverses: Array<BigInteger>;
     global_votes: Array<Array<Ciphertext>>;
@@ -502,7 +502,7 @@ function test_vote(num_voters = 4, options = [4]){
     var vote_proofs = [];
 
     for (var i = 0; i < num_voters; i += 1){
-        voters.push(new Voter(p, g, num_voters, i, options, generators));
+        voters.push(new CryptoVoter(p, g, num_voters, i, options, generators));
 
         voters[voters.length-1].set_vote(votes[i]);
 

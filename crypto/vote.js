@@ -187,9 +187,9 @@ function range_apply(r, f) {
         return f(i);
     });
 }
-var Voter = (function (_super) {
-    __extends(Voter, _super);
-    function Voter(p, g, n, voter_id, options, generators) {
+var CryptoVoter = (function (_super) {
+    __extends(CryptoVoter, _super);
+    function CryptoVoter(p, g, n, voter_id, options, generators) {
         _super.call(this, p, g, n, voter_id, options.length);
         this.voter_id = voter_id;
         this.options = options;
@@ -199,11 +199,11 @@ var Voter = (function (_super) {
         this.global_votes = new Array(n);
         this.generator_inverses = generators.map(function (G) { return G.modPow(p.subtract(2), p); });
     }
-    Voter.prototype.set_vote = function (vote) {
+    CryptoVoter.prototype.set_vote = function (vote) {
         //TODO: maybe make sure it's valid
         this.vote = vote;
     };
-    Voter.prototype.encrypt_and_prove = function () {
+    CryptoVoter.prototype.encrypt_and_prove = function () {
         this.encrypted_vote = new Array(this.num_votes);
         var h = this.public_key;
         this.commits = new Array(this.num_votes);
@@ -248,7 +248,7 @@ var Voter = (function (_super) {
         }
         return this.commits;
     };
-    Voter.prototype.verify_vote = function (p_id, commits) {
+    CryptoVoter.prototype.verify_vote = function (p_id, commits) {
         var verified = true; //TODO: double check scope of this guy
         var p = this.p;
         var q = this.q;
@@ -300,7 +300,7 @@ var Voter = (function (_super) {
         }
         return verified;
     };
-    Voter.prototype.calc_vote_step1 = function () {
+    CryptoVoter.prototype.calc_vote_step1 = function () {
         var p = this.p;
         var all_verified = this.votes_verified.reduce(function (a, b) {
             return a && b;
@@ -323,7 +323,7 @@ var Voter = (function (_super) {
             return this.log_ZKP_prove(ws);
         }
     };
-    Voter.prototype.calc_vote_step2 = function () {
+    CryptoVoter.prototype.calc_vote_step2 = function () {
         if (!this.log_ZKP_verify_all()) {
             //not yet verified everyone
             return null;
@@ -334,7 +334,7 @@ var Voter = (function (_super) {
             return out;
         }
     };
-    return Voter;
+    return CryptoVoter;
 }(Pedersen));
 function test_vote(num_voters, options) {
     if (num_voters === void 0) { num_voters = 4; }
@@ -352,7 +352,7 @@ function test_vote(num_voters, options) {
     var voters = [];
     var vote_proofs = [];
     for (var i = 0; i < num_voters; i += 1) {
-        voters.push(new Voter(p, g, num_voters, i, options, generators));
+        voters.push(new CryptoVoter(p, g, num_voters, i, options, generators));
         voters[voters.length - 1].set_vote(votes[i]);
     }
     for (var i = 0; i < num_voters; i += 1) {

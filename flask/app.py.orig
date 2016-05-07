@@ -78,6 +78,7 @@ def home():
 	if session['user_name']:
 		query = "SELECT * FROM votes_info WHERE creator_id=" + session['user_name']
 		initiated_votes = db_func.execute_sql_select(query)
+<<<<<<< HEAD
 		query = "SELECT vote_id FROM qualified_votes WHERE voter_id=" + session['user_name']
 		cast_votes_id = db_func.execute_sql_select(query)
 		for i in range(cast_votes_id):
@@ -85,6 +86,10 @@ def home():
 			cast_votes[i] = db_func.execute_sql_select(query)
 		initiated_votes_num = len(initiated_votes)
 		cast_votes_num = len(cast_votes)
+=======
+		query = "SELECT * FROM qualified_votes WHERE voter_id=" + session['user_name']
+		cast_votes = db_func.execute_sql_select(query)
+>>>>>>> e52ba8682aa7ae2dc2f9be44803b3b5671e4623b
 		return render_template('home.html', **locals())
 	else:
 		warning = "You are not logged in!"
@@ -356,7 +361,11 @@ def create_vote():
 	expire_time = time.strftime("%Y-%m-%d %H:%M:%S", input_time)
 
 	if 'user_id' in session:
+<<<<<<< HEAD
+		return render_template('setup_complete.html')
+=======
 		
+>>>>>>> e52ba8682aa7ae2dc2f9be44803b3b5671e4623b
 	else:
 		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text)
 

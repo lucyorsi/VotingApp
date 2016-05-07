@@ -19,13 +19,15 @@ create table votes_info (
 	creator_id integer,
 	expire_time datetime not null,
 	vote_method integer not null,
-	secure_level integer not null, 
+	secure_level integer not null,
+	vote_end integer not null,
 	foreign key (creator_id) references user_info(user_id)
 );
 
 create table qualified_voters(
 	vote_id integer not null,
 	voter_id integer not null,
+	already_vote integer not null,
 	foreign key (vote_id) references votes_info(vote_id),
 	foreign key (voter_id) references user_info(user_id)
 );

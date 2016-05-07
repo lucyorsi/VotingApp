@@ -31,6 +31,8 @@ def setup():
 		secure_level = 1
 		return render_template('setup.html', **locals())
 
+
+
 @app.route("/register", methods=["POST"])
 def register():
 	user_name = request.form["signup-username"]
@@ -63,7 +65,12 @@ def login():
 		warning = "Login failed!"
 		return render_template('notification.html', **locals())
 
+	return render_template('index.html')
 
+@app.route("/logout")
+def logout():
+	session.pop('username', None)
+	session.pop('user_id', None)
 	return render_template('index.html')
 
 

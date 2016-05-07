@@ -22,7 +22,10 @@ users = {}
 
 @login_manager.user_loader
 def load_user(unique_id):
-    return users[unique_id]
+    if unique_id in users:
+        return users[unique_id]
+    else:
+        return None
 
 class User:
     def __init__(self, user_name, user_id, unique_id):

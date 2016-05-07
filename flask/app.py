@@ -230,11 +230,17 @@ def view_result(vote_id):
 	vote_name = results[1]
 	expire_time = results[3]
 	vote_method = results[4]
-	query = "SELECT * FROM votes_info WHERE creator_id='" + str(session['user_id']) + "' AND vote_id='" + str(vote_id) + "'"
-	correct_vote = db_func.execute_sql_select(query)
-	if len(correct_vote) == 0:
-		warning = "You are not authorized to view this!"
-		return render_template('notification.html', ** locals())
+	secure_level = results[5]
+	if (secure_level != 1):
+		if ('user_id' in session):
+			query = "SELECT * FROM votes_info WHERE creator_id='" + str(session['user_id']) + "' AND vote_id='" + str(vote_id) + "'"
+			correct_vote = db_func.execute_sql_select(query)
+			if len(correct_vote) == 0:
+				warning = "You are not authorized to view this!"
+				return render_template('notification.html', ** locals())
+		else:
+			warning = "You are not authorized to view this!"
+			return render_template('notification.html', ** locals())
 
 	results = db_func.get_candidate_list(vote_id)
 

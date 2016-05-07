@@ -8,6 +8,8 @@ import socket
 
 app = Flask(__name__)
 
+app.secret_key = "igroup-4140proj"
+
 port_number = 5000
 
 @app.route("/init_database")
@@ -52,9 +54,14 @@ def login():
 	results = db_func.execute_sql_select(query)
 	if( len(results) == 1):
 		#login success
-		print "find one!"
+		print (results[0][0], results[0][1])
+		results = db_func.execute_sql_select(query)
+		session['user_name'] = results[0][1]
+		session['user_id'] = results[0][0]
+		return render_template('home.html', **locals())
 	else:
-		print "fail to find one!"
+		warning = "Login failed!"
+		return render_template('notification.html', **locals())
 
 
 	return render_template('index.html')

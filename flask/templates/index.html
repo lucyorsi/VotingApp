@@ -23,10 +23,8 @@
         </div>
         <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
             {% if session['user_id'] %}
-            <!-- <h5 ><a class="navi-element hvr-sink">Account</a></h5> -->
-                <h5 ><a class="navi-element hvr-sink">Dashboard</a></h5>
                 <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
-                <h5 ><a class="navi-element hvr-sink">{{session['user_name']}}</a></h5>
+                <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
             {% else %}
                 <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalLogin">Login</a>
                 <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalRegister">Register</a>

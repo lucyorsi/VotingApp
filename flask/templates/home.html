@@ -23,10 +23,8 @@
             <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal" href="/">Another Vote</a></h3>
         </div>
         <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
-            <!-- <h5 ><a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalUpdateInfo">Account</a></h5> -->
-            <h5 ><a class="navi-element hvr-sink" >Dashboard</a></h5>
             <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
-            <h5 ><a class="navi-element hvr-sink">{{session['user_name']}}</a></h5>
+            <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
         </div>
     </div>
 
@@ -37,7 +35,7 @@
     <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="adjust-pos-1">
-                <a class="btn-big btn-init-1 hvr-grow"><i class="fa fa-plus" aria-hidden="true"></i> Initiate a vote</a>
+                <a class="btn-big btn-init-1 hvr-grow"><i class="fa fa-plus" aria-hidden="true" href="/setup"></i> Initiate a vote</a>
             </div>
         </div>
     </div>

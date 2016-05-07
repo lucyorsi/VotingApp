@@ -29,6 +29,13 @@ def setup():
 		secure_level = 1
 		return render_template('setup.html', **locals())
 
+@app.route("/register", methods=["POST"])
+def register():
+	return render_template('index.html')
+
+@app.route("/login", methods=["POST"])
+def login():
+	return render_template('index.html')
 
 
 @app.route("/cast_a_vote/<vote_id>")

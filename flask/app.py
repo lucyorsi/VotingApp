@@ -31,7 +31,17 @@ def setup():
 
 @app.route("/register", methods=["POST"])
 def register():
-	return render_template('index.html')
+	user_name = request.form["signup-username"]
+	user_email = request.form["signup-email"]
+	password =  request.form["signup-password"]
+	error, row_id = db_func.execute_sql_insert_user_info(user_name, password, user_email)
+	print error, row_id
+	if error == 1:
+		warning = "This email has already been used!"
+		return render_template('notification.html', **locals())
+	else:
+		success = "You have successfully registered an account!"
+		return render_template('notification.html', **locals())
 
 
 @app.route("/login", methods=["POST"])

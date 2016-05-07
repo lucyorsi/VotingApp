@@ -4,6 +4,7 @@ from flask import Flask, render_template, url_for, request, session, g, redirect
 from flask.ext.mysql import MySQL
 import db_func
 import time
+import datetime
 import socket
 
 app = Flask(__name__)
@@ -93,7 +94,6 @@ def home():
 @app.route("/cast_a_vote/<vote_id>")
 def cast_a_vote(vote_id):
 	results = db_func.check_vote_method(vote_id)
-
 	# Check whether vote_id exists
 	if (results == 0):
 		warning = "Sorry, the vote does not exist."
@@ -102,23 +102,28 @@ def cast_a_vote(vote_id):
 		vote_name = results[1]
 		expire_time = results[3]
 		vote_method = results[4]
-
-	results = db_func.get_candidate_list(vote_id)
-	candidate_num = len(results)
-	candidate_list = {}
-	i = 0
-	for row in results:
-		candidate_list[i, 0] = row[2] #candidate name
-		candidate_list[i, 1] = row[0] #candidate id
-		i = i + 1
-	if (vote_method == 1):
-		return render_template('vote_single.html', **locals())
-	elif (vote_method == 2):
-		return render_template('vote_ranking.html', **locals())
-	elif (vote_method == 3):
-		return render_template('vote_weight.html', **locals())
-	elif (vote_method == 4):
-		return render_template('vote_majority.html', **locals())
+		# Check whether vote has expired
+		current_time = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S")
+		if expire_time < current_time:
+			warning = "Sorry, the vote has already ended."
+			return render_template('notification.html', **locals())
+		else:
+			results = db_func.get_candidate_list(vote_id)
+			candidate_num = len(results)
+			candidate_list = {}
+			i = 0
+			for row in results:
+				candidate_list[i, 0] = row[2] #candidate name
+				candidate_list[i, 1] = row[0] #candidate id
+				i = i + 1
+			if (vote_method == 1):
+				return render_template('vote_single.html', **locals())
+			elif (vote_method == 2):
+				return render_template('vote_ranking.html', **locals())
+			elif (vote_method == 3):
+				return render_template('vote_weight.html', **locals())
+			elif (vote_method == 4):
+				return render_template('vote_majority.html', **locals())
 
 
 @app.route("/receive_a_vote", methods=["POST"])
@@ -356,7 +361,7 @@ def create_vote():
 	expire_time = time.strftime("%Y-%m-%d %H:%M:%S", input_time)
 
 	if 'user_id' in session:
-		
+		somevalue = "abc"
 	else:
 		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text)
 

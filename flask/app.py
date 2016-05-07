@@ -18,6 +18,12 @@ port_number = 5000
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
+users = {}
+
+@login_manager.user_loader
+def load_user(unique_id):
+    return users[unique_id]
+
 class User:
     def __init__(self, user_name, user_id, unique_id):
         self.user_name = user_name
@@ -94,6 +100,8 @@ def login():
 
         new_user = User(user_name, user_id, user_key)
         login_user(new_user)
+
+        users[user_key] = new_user
 
         return redirect('/home')
     else:

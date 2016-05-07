@@ -19,6 +19,10 @@ conn = mysql.connect()
 def create_database():
 
 	cursor = conn.cursor()
+	cursor.execute('''DROP TABLE IF EXISTS list_element;''')
+	conn.commit()
+	cursor.execute('''DROP TABLE IF EXISTS ranking_list_info;''')
+	conn.commit()
 	cursor.execute('''DROP TABLE IF EXISTS ballots_info;''')
 	conn.commit()
 	cursor.execute('''DROP TABLE IF EXISTS candidates_list;''')
@@ -66,10 +70,27 @@ def create_database():
 		vote_id integer not null,
 		candidate_id integer not null,
 		candidate_point integer,
-		voter_id integer,
 		yes_no integer,
+		voter_id integer,
 		foreign key (candidate_id) references candidates_list(candidate_id),
-		foreign key (voter_id) references user_info(user_id)
+		foreign key (voter_id) references user_info(user_id),
+		foreign key (vote_id) references votes_info(vote_id)
+	);''')
+	conn.commit()
+	cursor.execute('''create table ranking_list_info (
+		list_id integer primary key auto_increment,
+		vote_id integer not null,
+		voter_id integer,
+		foreign key (vote_id) references votes_info(vote_id)
+	);''')
+	conn.commit()
+	cursor.execute('''create table list_element (
+		elem_id integer primary key auto_increment,
+		list_id integer not null,
+		candidate_id integer not null,
+		rank integer not null,
+		foreign key (list_id) references ranking_list_info(list_id),
+		foreign key (candidate_id) references candidates_list(candidate_id)
 	);''')
 	conn.commit()
 
@@ -160,3 +181,25 @@ def count_candidate_total_yes(vote_id, candidate_id):
 	total_yes = cursor.rowcount
 	cursor.close()
 	return total_yes
+
+def create_new_list(vote_id):
+	cursor = conn.cursor()
+	cursor.execute("INSERT INTO ranking_list_info (vote_id) VALUES(%s)", (vote_id))
+	conn.commit()
+	list_id = cursor.lastrowid
+	cursor.close()
+	return list_id
+
+def insert_new_list_elem(list_id, candidate_id, rank):
+	cursor = conn.cursor()
+	cursor.execute("INSERT INTO list_element (list_id, candidate_id, rank) VALUES(%s, %s, %s)", (list_id, candidate_id, rank))
+	conn.commit()
+	cursor.close()
+
+def execute_sql(sql):
+	cursor = conn.cursor()
+	cursor.execute(sql)
+	result = cursor.fetchall()
+	conn.commit()
+	cursor.close()
+	return result

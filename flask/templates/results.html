@@ -53,6 +53,10 @@
 			<p class="my_p_1 my_p_2"> Expire Date: <span style="color:black">{{expire_time}}</span></p>
 			<br>
 			<p class="my_p_1 my_p_2"> Vote Method: <span style="color:black">{{vote_method}}</span></p>
+            {%if warning %}
+                <br>
+                <p class="my_p_1" style="color: #e38b75;">{{warning}}</p>
+            {% endif %}
 
             {% if vote_method is equalto "Single" %}
                 <br>
@@ -65,7 +69,13 @@
                 {% endfor %}
             {% elif vote_method is equalto "Ranking" %}
                 <br>
-                <p class="my_p_1 my_p_2"> Current winner: {{winner}}</p>
+                <p class="my_p_1 my_p_2"> Current winner: </p>
+                <p class="my_p_1 my_p_2" style="color:black"> {{winner}}</p>
+                <br>
+                <p class="my_p_1 my_p_2"> Last round each candidates' vote: </p>
+                {% for i in range(candidate_num) %}
+                    <p class="my_p_1 my_p_2" style="color:black"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
+                {% endfor %}
             {% elif vote_method is equalto "Weight" %}
                 <br>
                 <p class="my_p_1 my_p_2"> Current winner:</p>

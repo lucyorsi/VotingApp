@@ -20,7 +20,6 @@ create table votes_info (
 	expire_time datetime not null,
 	vote_method integer not null,
 	secure_level integer not null,
-	vote_end integer not null,
 	foreign key (creator_id) references user_info(user_id)
 );
 

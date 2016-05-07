@@ -361,9 +361,15 @@ def create_vote():
 	expire_time = time.strftime("%Y-%m-%d %H:%M:%S", input_time)
 
 	if 'user_id' in session:
-		somevalue = "abc"
+		voter_upload_text = request.form['voter_upload_text']
+		voter_upload_text = voter_upload_text.split('\r\n')
+		for i in range(len(voter_upload_text)):
+			query = ""
+		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, 2, voter_id_text)
+		
 	else:
-		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text)
+		voter_upload_text = ""
+		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, 1, voter_upload_text)
 
 	url_creator = socket.gethostbyname(socket.gethostname())
 

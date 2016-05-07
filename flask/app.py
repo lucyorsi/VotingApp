@@ -75,13 +75,18 @@ def logout():
 
 @app.route("/home")
 def home():
-	if session.['user_name']:
-		query = "SELECT * FROM votes_info WHERE creator_id=" + session.['user_name']
+	if session['user_name']:
+		query = "SELECT * FROM votes_info WHERE creator_id=" + session['user_name']
 		initiated_votes = db_func.execute_sql_select(query)
-		query = "SELECT * FROM qualified_votes WHERE voter_id=" + session.['user_name']
-		cast_votes = db_func.execute_sql_select(query)
+		query = "SELECT vote_id FROM qualified_votes WHERE voter_id=" + session['user_name']
+		cast_votes_id = db_func.execute_sql_select(query)
+		for i in range(cast_votes_id):
+			query = "SELECT * FROM votes_info WHERE vote_id=" + cast_votes_id[i]
+			cast_votes[i] = db_func.execute_sql_select(query)
+		initiated_votes_num = len(initiated_votes)
+		cast_votes_num = len(cast_votes)
 		return render_template('home.html', **locals())
-	else
+	else:
 		warning = "You are not logged in!"
 		return render_template('notification.html', ** locals())
 
@@ -328,7 +333,7 @@ def view_result(vote_id):
 @app.route("/create_vote", methods=["POST"])
 def create_vote():
 	if 'user_id' in session:
-		return render_template('setup_compelete.html')
+		return render_template('setup_complete.html')
 	else:
 		vote_name = request.form['vote_name']
 		expire_time = request.form['expire_time']

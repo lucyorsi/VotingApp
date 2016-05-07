@@ -14,206 +14,160 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 </head>
-
 <body>
-<div class="container">
-
-    <div class="row navi">
-        <div class="col-md-3 col-sm-3 col-xs-3">
-            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal" href="/">Another Vote</a></h3>
-        </div>
-        <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
-            <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
-            <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
-        </div>
-    </div>
-
-    <div class="row">
-        <hr style="width=100%;">
-    </div>
-
-    <div class="row">
-        <div class="col-md-12 col-sm-12">
-            <div class="adjust-pos-1">
-                <a class="btn-big btn-init-1 hvr-grow"><i class="fa fa-plus" aria-hidden="true" href="/setup"></i> Initiate a vote</a>
+    <div class="container">
+        <div class="row navi">
+            <div class="col-md-3 col-sm-3 col-xs-3">
+                <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal" href="/">Another Vote</a></h3>
+            </div>
+            <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
+                <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
+                <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
             </div>
         </div>
-    </div>
-
-    <div class="row">
-        <hr style="width=100%;">
-    </div>
-
-    <div class="row" >
-        <div class="col-md-12 col-sm-12" style="margin:auto;";>
-
-            <div class="panel panel-default " style="border-color: #e8a735;">
-                <div class="my-panel" style="background:#e8a735;">
-                    <h4 class="my-font my-font-1">Manage Your Initiated Votes</h4>
-                </div>
-                <div id="initiated-votes-list">
-
-                    <div class="vote-info my-font-2">
-                        <div>
-                            <a class="hvr-sweep-to-right vote-info-title">Name: xxxxxxx</a>
-                        </div>
-                        <div>
-                            <p class="vote-info-elem">ID: xxxxxxxxxxx</p>
-                            <p class="vote-info-elem">Method: xxxxxxxxx</p>
-                            <p class="vote-info-elem">Expire time: 2016-mm-dd hh-mm-ss</p>
-                        </div>
-                    </div>
-
-                    <hr style="width=90%; left:5%; margin:5px;">
-
-                    <div class="vote-info my-font-2">
-                        <div>
-                            <a class="hvr-sweep-to-right vote-info-title">Name: xxxxxxx</a>
-                        </div>
-                        <div>
-                            <p class="vote-info-elem">ID: xxxxxxxxxxx</p>
-                            <p class="vote-info-elem">Method: xxxxxxxxx</p>
-                            <p class="vote-info-elem">Expire time: 2016-mm-dd hh-mm-ss</p>
-                        </div>
-                    </div>
-
-                    <hr style="width=90%; left:5%; margin:5px;">
-
-                    <div class="vote-info my-font-2">
-                        <div>
-                            <a class="hvr-sweep-to-right vote-info-title">Name: xxxxxxx</a>
-                        </div>
-                        <div>
-                            <p class="vote-info-elem">ID: xxxxxxxxxxx</p>
-                            <p class="vote-info-elem">Method: xxxxxxxxx</p>
-                            <p class="vote-info-elem">Expire time: 2016-mm-dd hh-mm-ss</p>
-                        </div>
-                    </div>
-
+        <div class="row">
+            <hr style="width=100%;">
+        </div>
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="adjust-pos-1">
+                    <a class="btn-big btn-init-1 hvr-grow"href="/setup"><i class="fa fa-plus" aria-hidden="true"></i> Initiate a vote</a>
                 </div>
             </div>
-
         </div>
-    </div>
-
-    <div class="row">
-        <hr style="width=100%;">
-    </div>
-
-    <div class="row" >
-        <div class="col-md-12 col-sm-12" style="margin:auto;";>
-
-            <div class="panel panel-default " style="border-color: #e38b75;">
-                <div class="my-panel" style="background:#e38b75;">
-                    <h4 class="my-font my-font-1">Cast A Vote</h4>
+        <div class="row">
+            <hr style="width=100%;">
+        </div>
+        <div class="row" >
+            <div class="col-md-12 col-sm-12" style="margin:auto;";>
+                <div class="panel panel-default " style="border-color: #e8a735;">
+                    <div class="my-panel" style="background:#e8a735;">
+                        <h4 class="my-font my-font-1">Manage Your Initiated Votes</h4>
+                    </div>
+                    <div id="initiated-votes-list">
+                        {% if initiated_votes_num != undefined %}
+                            {% for i in range(initiated_votes_num - 1) %}
+                                <div class="vote-info my-font-2">
+                                    <div>
+                                        <a class="hvr-sweep-to-right vote-info-title">Name: {{initiated_votes[i][1]}}</a>
+                                    </div>
+                                    <div>
+                                        <p class="vote-info-elem">ID: {{initiated_votes[i][0]}}</p>
+                                        <p class="vote-info-elem">Method: {{initiated_votes[i][4]}}</p>
+                                        <p class="vote-info-elem">Expire time: {{initiated_votes[i][3]}}</p>
+                                    </div>
+                                </div>
+                                <hr style="width=90%; left:5%; margin:5px;">
+                            {% endfor %}
+                            <div class="vote-info my-font-2">
+                                <div>
+                                    <a class="hvr-sweep-to-right vote-info-title">Name: {{initiated_votes[initiated_votes_num][1]}}</a>
+                                </div>
+                                <div>
+                                    <p class="vote-info-elem">ID: {{initiated_votes[initiated_votes_num][0]}}</p>
+                                    <p class="vote-info-elem">Method: {{initiated_votes[initiated_votes_num][4]}}</p>
+                                    <p class="vote-info-elem">Expire time: {{initiated_votes[initiated_votes_num][3]}}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
-                <div id="initiated-votes-list">
 
-                    <div class="vote-info my-font-2">
-                        <div>
-                            <a class="hvr-sweep-to-left vote-info-title-2" >Name: xxxxxxx</a>
-                        </div>
-                        <div>
-                            <p class="vote-info-elem">ID: xxxxxxxxxxx</p>
-                            <p class="vote-info-elem">Method: xxxxxxxxx</p>
-                            <p class="vote-info-elem">Expire time: 2016-mm-dd hh-mm-ss</p>
-                        </div>
+            </div>
+        </div>
+        <div class="row">
+            <hr style="width=100%;">
+        </div>
+        <div class="row" >
+            <div class="col-md-12 col-sm-12" style="margin:auto;";>
+                <div class="panel panel-default " style="border-color: #e38b75;">
+                    <div class="my-panel" style="background:#e38b75;">
+                        <h4 class="my-font my-font-1">Cast A Vote</h4>
                     </div>
-
-                    <hr style="width=90%; left:5%; margin:5px;">
-
-                    <div class="vote-info my-font-2">
-                        <div>
-                            <a class="hvr-sweep-to-left vote-info-title-2" >Name: xxxxxxx</a>
-                        </div>
-                        <div>
-                            <p class="vote-info-elem">ID: xxxxxxxxxxx</p>
-                            <p class="vote-info-elem">Method: xxxxxxxxx</p>
-                            <p class="vote-info-elem">Expire time: 2016-mm-dd hh-mm-ss</p>
-                        </div>
+                    <div id="initiated-votes-list">
+                        {% if cast_votes_num != undefined %}
+                            {% for i in range(cast_votes_num - 1) %}
+                                <div class="vote-info my-font-2">
+                                    <div>
+                                        <a class="hvr-sweep-to-left vote-info-title-2" >Name: {{cast_votes[i][1]}}</a>
+                                    </div>
+                                    <div>
+                                        <p class="vote-info-elem">ID: {{cast_votes[i][0]}}</p>
+                                        <p class="vote-info-elem">Method: {{cast_votes[i][4]}}</p>
+                                        <p class="vote-info-elem">Expire time: {{cast_votes[i][3]}}</p>
+                                    </div>
+                                </div>
+                                <hr style="width=90%; left:5%; margin:5px;">
+                            {% endfor %}
+                            <div class="vote-info my-font-2">
+                                <div>
+                                    <a class="hvr-sweep-to-left vote-info-title-2" >Name: {{cast_votes[cast_votes_num][1]}}</a>
+                                </div>
+                                <div>
+                                    <p class="vote-info-elem">ID: {{cast_votes[cast_votes_num][0]}}</p>
+                                    <p class="vote-info-elem">Method: {{cast_votes[cast_votes_num][4]}}</p>
+                                    <p class="vote-info-elem">Expire time: {{cast_votes[cast_votes_num][3]}}</p>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
-
-                    <hr style="width=90%; left:5%; margin:5px;">
-
-                    <div class="vote-info my-font-2">
-                        <div>
-                            <a class="hvr-sweep-to-left vote-info-title-2" >Name: xxxxxxx</a>
-                        </div>
-                        <div>
-                            <p class="vote-info-elem">ID: xxxxxxxxxxx</p>
-                            <p class="vote-info-elem">Method: xxxxxxxxx</p>
-                            <p class="vote-info-elem">Expire time: 2016-mm-dd hh-mm-ss</p>
-                        </div>
-                    </div>
-
                 </div>
             </div>
-
+        </div>
+        <div class="row">
+            <hr style="width=100%;">
         </div>
     </div>
-
-    <div class="row">
-        <hr style="width=100%;">
-    </div>
-
-
-</div>
-
-<div class="container">
-      
-  <!-- Modal Update Info-->
-  <div class="modal fade" id="myModalUpdateInfo" role="dialog">
-    <div class="modal-dialog">
-    
-      <!-- Modal content-->
-      <div class="modal-content">
-        <div class="modal-header" style="padding:35px 50px;">
-          <button type="button" class="close" style="color:white !important;" data-dismiss="modal">&times;</button>
-          <h4 class="my-modal-h4"><span class="glyphicon glyphicon-file"></span> Update Info</h4>
-        </div>
-        <div class="modal-body" style="padding:40px 50px;">
-          <form id="update-info-form" role="form">
-            <div class="form-group">
-              <label for="username"><span class="glyphicon glyphicon-user"></span> Username*</label>
-              <span id="update-info-username-ok" class="glyphicon glyphicon-ok update-info-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"> </span>
-              <span id="update-info-username-empty" class="glyphicon glyphicon-remove update-info-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Username should not be empty.</span>
-              <input type="text" class="form-control" id="update-info-username" placeholder="Enter username" >
+    <div class="container">
+      <!-- Modal Update Info-->
+      <div class="modal fade" id="myModalUpdateInfo" role="dialog">
+        <div class="modal-dialog">
+          <!-- Modal content-->
+          <div class="modal-content">
+            <div class="modal-header" style="padding:35px 50px;">
+              <button type="button" class="close" style="color:white !important;" data-dismiss="modal">&times;</button>
+              <h4 class="my-modal-h4"><span class="glyphicon glyphicon-file"></span> Update Info</h4>
             </div>
-            <!-- <div class="form-group">
-                <label for="gender"><span class="glyphicon glyphicon-heart"></span> Gender*</label><br />
-                <input type="radio" class="update-info-gender" name="gender" value="male" checked="checked" />Male
-                <input type="radio" class="update-info-gender" name="gender" value="female"/>Female
+            <div class="modal-body" style="padding:40px 50px;">
+              <form id="update-info-form" role="form">
+                <div class="form-group">
+                  <label for="username"><span class="glyphicon glyphicon-user"></span> Username*</label>
+                  <span id="update-info-username-ok" class="glyphicon glyphicon-ok update-info-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"> </span>
+                  <span id="update-info-username-empty" class="glyphicon glyphicon-remove update-info-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Username should not be empty.</span>
+                  <input type="text" class="form-control" id="update-info-username" placeholder="Enter username" >
+                </div>
+                <!-- <div class="form-group">
+                    <label for="gender"><span class="glyphicon glyphicon-heart"></span> Gender*</label><br />
+                    <input type="radio" class="update-info-gender" name="gender" value="male" checked="checked" />Male
+                    <input type="radio" class="update-info-gender" name="gender" value="female"/>Female
+                </div>
+                <div class="form-group">
+                    <label for="age"><span class="glyphicon glyphicon-leaf"></span> Age*</label></label>
+                    <input type="number" class="form-control" id="update-info-age" min="0"/>
+                </div> -->
+                <div class="form-group">
+                  <label for="password"><span class="glyphicon glyphicon-eye-open"></span> Password*</label>
+                  <span id="update-info-password-ok" class="glyphicon glyphicon-ok update-info-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
+                  <span id="update-info-password-empty" class="glyphicon glyphicon-remove update-info-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password should not be empty.</span>
+                  <input type="password" class="form-control" id="update-info-password" placeholder="Enter password">
+                </div>
+                <div class="form-group">
+                  <label for="checkPassword"><span class="glyphicon glyphicon-eye-open"></span> Check Password*</label>
+                  <span id="update-info-checkPassword-ok" class="glyphicon glyphicon-ok update-info-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
+                  <span id="update-info-checkPassword-notMatch" class="glyphicon glyphicon-remove update-info-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password does not match.</span>
+                  <input type="password" class="form-control" id="update-info-checkPassword" placeholder="Check password">
+                </div>
+                  <button type="submit" class="btn my-modal-btn btn-block"><span class="glyphicon glyphicon-ok"></span>Confirm</button>
+              </form>
             </div>
-            <div class="form-group">
-                <label for="age"><span class="glyphicon glyphicon-leaf"></span> Age*</label></label>
-                <input type="number" class="form-control" id="update-info-age" min="0"/>
-            </div> -->
-            <div class="form-group">
-              <label for="password"><span class="glyphicon glyphicon-eye-open"></span> Password*</label>
-              <span id="update-info-password-ok" class="glyphicon glyphicon-ok update-info-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
-              <span id="update-info-password-empty" class="glyphicon glyphicon-remove update-info-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password should not be empty.</span>
-              <input type="password" class="form-control" id="update-info-password" placeholder="Enter password">
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-danger btn-default pull-left" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancel</button>
+              <!-- <p>Forgot <a href="#">Password?</a></p> -->
             </div>
-            <div class="form-group">
-              <label for="checkPassword"><span class="glyphicon glyphicon-eye-open"></span> Check Password*</label>
-              <span id="update-info-checkPassword-ok" class="glyphicon glyphicon-ok update-info-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
-              <span id="update-info-checkPassword-notMatch" class="glyphicon glyphicon-remove update-info-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password does not match.</span>
-              <input type="password" class="form-control" id="update-info-checkPassword" placeholder="Check password">
-            </div>
-              <button type="submit" class="btn my-modal-btn btn-block"><span class="glyphicon glyphicon-ok"></span>Confirm</button>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-danger btn-default pull-left" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancel</button>
-          <!-- <p>Forgot <a href="#">Password?</a></p> -->
+          </div>
         </div>
       </div>
-
     </div>
-  </div>
-  
-</div>
-
 </body>
 
 </html>

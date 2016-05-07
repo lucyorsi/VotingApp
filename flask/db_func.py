@@ -99,10 +99,15 @@ def create_database():
 
 	return
 
-def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secure_level, voter_id_text):
+def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secure_level, voter_id_list, creator_id):
 	cursor = conn.cursor()
-	cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level) VALUES (%s, %s, %s, %s)", (vote_name, expire_time, vote_method, secure_level))
-	conn.commit()
+
+	if(secure_level == 2):
+		cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level, creator_id) VALUES (%s, %s, %s, %s, %s)", (vote_name, expire_time, vote_method, secure_level, creator_id))
+		conn.commit()
+	else:
+		cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level) VALUES (%s, %s, %s, %s)", (vote_name, expire_time, vote_method, secure_level))
+		conn.commit()
 
 	vote_id = cursor.lastrowid
 	for index in range(len(candidate_upload_text)):
@@ -110,7 +115,7 @@ def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secu
 		conn.commit()
 
 	if(secure_level == 2):
-		for index in range(len(voter_upload_text)):
+		for index in range(len(voter_id_list)):
 			cursor.execute("INSERT INTO qualified_voters (vote_id, voter_id, already_vote) VALUES(%s, %s, 0)", (vote_id, voter_id_list[index]))
 			conn.commit()
 	cursor.close()

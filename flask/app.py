@@ -60,7 +60,7 @@ def login():
 		results = db_func.execute_sql_select(query)
 		session['user_name'] = results[0][1]
 		session['user_id'] = results[0][0]
-		return render_template('home.html', **locals())
+		return redirect('/home')
 	else:
 		warning = "Login failed!"
 		return render_template('notification.html', **locals())
@@ -76,15 +76,19 @@ def logout():
 @app.route("/home")
 def home():
 	if session['user_name']:
-		query = "SELECT * FROM votes_info WHERE creator_id=" + session['user_name']
+		query = "SELECT * FROM votes_info WHERE creator_id='" + str(session['user_id']) + "'"
 		initiated_votes = db_func.execute_sql_select(query)
-		query = "SELECT vote_id FROM qualified_votes WHERE voter_id=" + session['user_name']
+		query = "SELECT vote_id FROM qualified_voters WHERE voter_id='" + str(session['user_id']) + "'"
 		cast_votes_id = db_func.execute_sql_select(query)
-		for i in range(cast_votes_id):
-			query = "SELECT * FROM votes_info WHERE vote_id=" + cast_votes_id[i]
-			cast_votes[i] = db_func.execute_sql_select(query)
+		print cast_votes_id
+		cast_votes = {}
+		for i in range(len(cast_votes_id)):
+			query = "SELECT * FROM votes_info WHERE vote_id='" + str(cast_votes_id[i][0]) + "'"
+			cast_votes[i] = db_func.execute_sql_select(query)[0]
 		initiated_votes_num = len(initiated_votes)
 		cast_votes_num = len(cast_votes)
+		print cast_votes_num
+		print cast_votes
 		return render_template('home.html', **locals())
 	else:
 		warning = "You are not logged in!"
@@ -358,13 +362,22 @@ def create_vote():
 	if 'user_id' in session:
 		voter_upload_text = request.form['voter_upload_text']
 		voter_upload_text = voter_upload_text.split('\r\n')
+		voter_id_list = {}
 		for i in range(len(voter_upload_text)):
-			query = ""
-		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, 2, voter_id_text)
+			query = "SELECT * FROM user_info WHERE user_email='" + str(voter_upload_text[i]) + "'"
+			results = db_func.execute_sql_select(query)
+			if(len(results) == 1):
+				voter_id_list[i] = results[0][0] #user id
+			else:
+				warning = "Sorry you have input unexisted user email."
+				return render_template('notification.html', **locals())
+
+		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, 2, voter_id_list, session['user_id'])
 		
 	else:
 		voter_upload_text = ""
-		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, 1, voter_upload_text)
+		creator_id = ""
+		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, 1, voter_upload_text, creator_id)
 
 	url_creator = socket.gethostbyname(socket.gethostname())
 

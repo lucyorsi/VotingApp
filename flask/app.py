@@ -75,13 +75,13 @@ def logout():
 
 @app.route("/home")
 def home():
-	if session.['user_name']:
-		query = "SELECT * FROM votes_info WHERE creator_id=" + session.['user_name']
+	if session['user_name']:
+		query = "SELECT * FROM votes_info WHERE creator_id=" + session['user_name']
 		initiated_votes = db_func.execute_sql_select(query)
-		query = "SELECT * FROM qualified_votes WHERE voter_id=" + session.['user_name']
+		query = "SELECT * FROM qualified_votes WHERE voter_id=" + session['user_name']
 		cast_votes = db_func.execute_sql_select(query)
 		return render_template('home.html', **locals())
-	else
+	else:
 		warning = "You are not logged in!"
 		return render_template('notification.html', ** locals())
 
@@ -327,43 +327,44 @@ def view_result(vote_id):
 
 @app.route("/create_vote", methods=["POST"])
 def create_vote():
+
+	vote_name = request.form['vote_name']
+	expire_time = request.form['expire_time']
+	vote_method = request.form['vote_method']
+	secure_level = request.form['secure_level']
+	# candidate_upload_type = request.form['candidate_upload_type']
+	candidate_upload_text = request.form['candidate_upload_text']
+
+	if (not vote_name):
+		warning = "You need to set Vote Name."
+		return render_template('setup.html', **locals())
+	if (not expire_time):
+		warning = "You need to set Expire Time."
+		return render_template('setup.html', **locals())
+	if (not candidate_upload_text):
+		warning = "You need to type in Candidate List."
+		return render_template('setup.html', **locals())
+
+	vote_method = int(vote_method)
+	candidate_upload_text = candidate_upload_text.split('\r\n')
+	input_time = time.strptime(expire_time, "%d/%m/%Y %H:%M")
+	expire_time = time.strftime("%Y-%m-%d %H:%M:%S", input_time)
+
 	if 'user_id' in session:
-		return render_template('setup_compelete.html')
+		
 	else:
-		vote_name = request.form['vote_name']
-		expire_time = request.form['expire_time']
-		vote_method = request.form['vote_method']
-		secure_level = request.form['secure_level']
-		# candidate_upload_type = request.form['candidate_upload_type']
-		candidate_upload_text = request.form['candidate_upload_text']
-
-		if (not vote_name):
-			warning = "You need to set Vote Name."
-			return render_template('setup.html', **locals())
-		if (not expire_time):
-			warning = "You need to set Expire Time."
-			return render_template('setup.html', **locals())
-		if (not candidate_upload_text):
-			warning = "You need to type in Candidate List."
-			return render_template('setup.html', **locals())
-
-		vote_method = int(vote_method)
-		candidate_upload_text = candidate_upload_text.split('\r\n')
-		input_time = time.strptime(expire_time, "%d/%m/%Y %H:%M")
-		expire_time = time.strftime("%Y-%m-%d %H:%M:%S", input_time)
-
 		vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text)
 
-		url_creator = socket.gethostbyname(socket.gethostname())
+	url_creator = socket.gethostbyname(socket.gethostname())
 
-		temp = ":" + str(port_number) + "/view_result/" + str(vote_id)
-		url_creator = url_creator + temp
+	temp = ":" + str(port_number) + "/view_result/" + str(vote_id)
+	url_creator = url_creator + temp
 
-		url_voter = socket.gethostbyname(socket.gethostname())
-		temp = ":" + str(port_number) + "/cast_a_vote/" + str(vote_id)
-		url_voter = url_voter + temp
+	url_voter = socket.gethostbyname(socket.gethostname())
+	temp = ":" + str(port_number) + "/cast_a_vote/" + str(vote_id)
+	url_voter = url_voter + temp
 
-		return render_template('setup_complete.html', **locals())
+	return render_template('setup_complete.html', **locals())
 
 
 if __name__ == "__main__":

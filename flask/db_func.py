@@ -48,12 +48,14 @@ def create_database():
 		expire_time datetime not null,
 		vote_method integer not null,
 		secure_level integer not null, 
+		vote_end integer not null,
 		foreign key (creator_id) references user_info(user_id)
 	);''')
 	conn.commit()
 	cursor.execute('''create table qualified_voters (
 		vote_id integer not null,
 		voter_id integer not null,
+		already_vote integer not null,
 		foreign key (vote_id) references votes_info(vote_id),
 		foreign key (voter_id) references user_info(user_id)
 	);''')
@@ -100,7 +102,7 @@ def create_database():
 
 def create_vote(vote_name, expire_time, vote_method, candidate_upload_text):
 	cursor = conn.cursor()
-	cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level) VALUES (%s, %s, %s, 1)", (vote_name, expire_time, vote_method))
+	cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level, vote_end) VALUES (%s, %s, %s, 1, 0)", (vote_name, expire_time, vote_method))
 	conn.commit()
 
 	vote_id = cursor.lastrowid

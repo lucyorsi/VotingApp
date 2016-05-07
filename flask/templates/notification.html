@@ -27,15 +27,13 @@
 
     <div class="row navi">
         <div class="col-md-3 col-sm-3 col-xs-3">
-            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal">Another Vote</a></h3>
+            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal" href="/">Another Vote</a></h3>
         </div>
         <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
-            <!-- <h5 ><a class="navi-element hvr-sink">Account</a></h5>
-            <h5 ><a class="navi-element hvr-sink">Dashboard</a></h5>
-            <h5 ><a class="navi-element hvr-sink">Logout</a></h5>
-            <h5 ><a class="navi-element hvr-sink">Username</a></h5> -->
-            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalLogin">Login</a>
-            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalRegister">Register</a>
+            {% if session['user_id'] %}
+                <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
+                <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
+            {% endif %}
         </div>
     </div>
 
@@ -45,10 +43,16 @@
 
     <div class="row" >
 
-		<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading" style="margin-top:40px"> Error! </h1>
-		<p class="col-md-12 col-sm-12 col-xs-12 my_p_1" style="margin-top:20px">{{warning}}/p>
+        {% if warning %}
+            <h1 class="col-md-12 col-sm-12 col-xs-12 my_heading" style="margin-top:40px"> Error! </h1>
+            <p class="col-md-12 col-sm-12 col-xs-12 my_p_1" style="margin-top:20px">{{warning}} </p>
+        {% else %}
+            <h1 class="col-md-12 col-sm-12 col-xs-12 my_heading" style="margin-top:40px"> Success! </h1>
+            <p class="col-md-12 col-sm-12 col-xs-12 my_p_1" style="margin-top:20px">{{success}} </p>
+        {% endif %}
+		
 		<div class="col-md-12 col-sm-12 col-xs-12">
-			<button class= "btn-big btn-return-1 hvr-grow "> Return to homepage </button>
+			<a class= "btn-big btn-return-1 hvr-grow " href="/"> Return to homepage </a>
 		</div>
 
 	</div>

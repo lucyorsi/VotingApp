@@ -27,15 +27,13 @@
 
     <div class="row navi">
         <div class="col-md-3 col-sm-3 col-xs-3">
-            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal">Another Vote</a></h3>
+            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal" href="/" >Another Vote</a></h3>
         </div>
         <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
-            <!-- <h5 ><a class="navi-element hvr-sink">Account</a></h5>
-            <h5 ><a class="navi-element hvr-sink">Dashboard</a></h5>
-            <h5 ><a class="navi-element hvr-sink">Logout</a></h5>
-            <h5 ><a class="navi-element hvr-sink">Username</a></h5> -->
-            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalLogin">Login</a>
-            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalRegister">Register</a>
+            {% if session['user_id'] %}
+                <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
+                <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
+            {% endif %}
         </div>
     </div>
 
@@ -53,6 +51,10 @@
 			<p class="my_p_1 my_p_2"> Expire Date: <span style="color:black">{{expire_time}}</span></p>
 			<br>
 			<p class="my_p_1 my_p_2"> Vote Method: <span style="color:black">{{vote_method}}</span></p>
+            {%if warning %}
+                <br>
+                <p class="my_p_1" style="color: #e38b75;">{{warning}}</p>
+            {% endif %}
 
             {% if vote_method is equalto "Single" %}
                 <br>
@@ -65,7 +67,13 @@
                 {% endfor %}
             {% elif vote_method is equalto "Ranking" %}
                 <br>
-                <p class="my_p_1 my_p_2"> Current winner: {{winner}}</p>
+                <p class="my_p_1 my_p_2"> Current winner: </p>
+                <p class="my_p_1 my_p_2" style="color:black"> {{winner}}</p>
+                <br>
+                <p class="my_p_1 my_p_2"> Last round each candidates' vote: </p>
+                {% for i in range(candidate_num) %}
+                    <p class="my_p_1 my_p_2" style="color:black"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
+                {% endfor %}
             {% elif vote_method is equalto "Weight" %}
                 <br>
                 <p class="my_p_1 my_p_2"> Current winner:</p>
@@ -91,10 +99,9 @@
             {% endif %}
 
 		</div>
-
-		<div class="col-md-12 col-sm-12 col-xs-12">
+<!-- 		<div class="col-md-12 col-sm-12 col-xs-12">
 			<a class= "btn-big btn-view hvr-grow"> End The Vote </a>
-		</div>
+		</div> -->
 		<div class="col-md-12 col-sm-12 col-xs-12">
 			<a class= "btn-big btn-return-1 hvr-grow" href="/"> Return to homepage </a>
 		</div>

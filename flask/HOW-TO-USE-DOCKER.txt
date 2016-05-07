@@ -94,6 +94,7 @@ pip install flask-socketio
 
 docker run -it -d -p 5000:5000 --name 4140 -v /home/ysong4/Documents/project-igroup/flask/:/tmp/ lucyorsi/igroup-votingserver
 
+docker run -it -d --name 4140 -v /home/ysong4/Documents/project-igroup/flask/:/ lucyorsi/igroup-votingserver
 
 -------------------------Usage of SQL--------------------
 

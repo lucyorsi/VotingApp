@@ -19,15 +19,16 @@
 
     <div class="row navi">
         <div class="col-md-3 col-sm-3 col-xs-3">
-            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal">Another Vote</a></h3>
+            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal" href="/" >Another Vote</a></h3>
         </div>
         <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
-            <!-- <h5 ><a class="navi-element hvr-sink">Account</a></h5>
-            <h5 ><a class="navi-element hvr-sink">Dashboard</a></h5>
-            <h5 ><a class="navi-element hvr-sink">Logout</a></h5>
-            <h5 ><a class="navi-element hvr-sink">Username</a></h5> -->
-            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalLogin">Login</a>
-            <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalRegister">Register</a>
+            {% if session['user_id'] %}
+                <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
+                <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
+            {% else %}
+                <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalLogin">Login</a>
+                <a class="navi-element hvr-sink" data-toggle="modal" data-target="#myModalRegister">Register</a>
+            {% endif %}
         </div>
     </div>
 
@@ -114,14 +115,14 @@
               <h4 class="my-modal-h4"><span class="glyphicon glyphicon-lock"></span> Login</h4>
             </div>
             <div class="modal-body" style="padding:40px 50px;">
-              <form id="login-form" role="form">
+              <form enctype="multipart/form-data" action="/login" method="POST" id="login-form" role="form">
                 <div class="form-group">
                   <label for="usrname"><span class="glyphicon glyphicon-envelope"></span> Email</label>
-                  <input type="text" class="form-control" id="login-email" placeholder="Enter email">
+                  <input type="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$" class="form-control" name="login-email" placeholder="Enter email" required>
                 </div>
                 <div class="form-group">
                   <label for="psw"><span class="glyphicon glyphicon-eye-open"></span> Password</label>
-                  <input type="password" class="form-control" id="login-password" placeholder="Enter password">
+                  <input type="password" class="form-control" name="login-password" placeholder="Enter password" required>
                 </div>
                 <!-- <div class="checkbox">
                   <label><input type="checkbox" value="" id="login-rememberMe">Remember me</label>
@@ -149,44 +150,32 @@
               <h4 class="my-modal-h4"><span class="glyphicon glyphicon-file"></span> Sign up</h4>
             </div>
             <div class="modal-body" style="padding:40px 50px;">
-              <form id="signup-form" role="form">
+              <form enctype="multipart/form-data" action="/register" method="POST" id="signup-form" role="form" onsubmit="return validateForm()">
                 <div class="form-group">
                   <label for="email"><span class="glyphicon glyphicon-envelope"></span> Email*</label>
-                  <span id="signup-email-ok" class="glyphicon glyphicon-ok signup-email-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
+                  <!-- <span id="signup-email-ok" class="glyphicon glyphicon-ok signup-email-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
                   <span id="signup-email-invalid" class="glyphicon glyphicon-remove signup-email-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Invalid Email Address.</span>
-                  <span id="signup-email-used" class="glyphicon glyphicon-remove signup-email-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> This email has already been used.</span>
-                  <input type="text" class="form-control" id="signup-email" placeholder="Enter email">
+                  <span id="signup-email-used" class="glyphicon glyphicon-remove signup-email-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> This email has already been used.</span> -->
+                  <input type="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$" class="form-control" name="signup-email" placeholder="Enter email" required>
                 </div>
                 <div class="form-group">
                   <label for="username"><span class="glyphicon glyphicon-user"></span> Username*</label>
-                  <span id="signup-username-ok" class="glyphicon glyphicon-ok signup-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"> </span>
-                  <span id="signup-username-empty" class="glyphicon glyphicon-remove signup-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Username should not be empty.</span>
-                  <input type="text" class="form-control" id="signup-username" placeholder="Enter username" >
+                  <!-- <span id="signup-username-ok" class="glyphicon glyphicon-ok signup-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"> </span>
+                  <span id="signup-username-empty" class="glyphicon glyphicon-remove signup-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Username should not be empty.</span> -->
+                  <input type="text" class="form-control" name="signup-username" placeholder="Enter username" required>
                 </div>
-                <!-- <div class="form-group">
-                    <label for="gender"><span class="glyphicon glyphicon-heart"></span> Gender*</label><br />
-                    <input type="radio" class="signup-gender" name="gender" value="male" checked="checked" />Male
-                    <input type="radio" class="signup-gender" name="gender" value="female"/>Female
-                </div>
-                <div class="form-group">
-                    <label for="age"><span class="glyphicon glyphicon-leaf"></span> Age*</label></label>
-                    <input type="number" class="form-control" id="signup-age" min="0"/>
-                </div> -->
                 <div class="form-group">
                   <label for="password"><span class="glyphicon glyphicon-eye-open"></span> Password*</label>
-                  <span id="signup-password-ok" class="glyphicon glyphicon-ok signup-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
-                  <span id="signup-password-empty" class="glyphicon glyphicon-remove signup-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password should not be empty.</span>
-                  <input type="password" class="form-control" id="signup-password" placeholder="Enter password">
+                  <!-- <span id="signup-password-ok" class="glyphicon glyphicon-ok signup-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
+                  <span id="signup-password-empty" class="glyphicon glyphicon-remove signup-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password should not be empty.</span> -->
+                  <input type="password" class="form-control" name="signup-password" id="password1" placeholder="Enter password" required>
                 </div>
                 <div class="form-group">
                   <label for="checkPassword"><span class="glyphicon glyphicon-eye-open"></span> Check Password*</label>
-                  <span id="signup-checkPassword-ok" class="glyphicon glyphicon-ok signup-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
-                  <span id="signup-checkPassword-notMatch" class="glyphicon glyphicon-remove signup-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password does not match.</span>
-                  <input type="password" class="form-control" id="signup-checkPassword" placeholder="Check password">
+                  <!-- <span id="signup-checkPassword-ok" class="glyphicon glyphicon-ok signup-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
+                  <span id="signup-checkPassword-notMatch" class="glyphicon glyphicon-remove signup-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password does not match.</span> -->
+                  <input type="password" class="form-control" name="signup-checkPassword" id="password2" placeholder="Check password" required>
                 </div>
-                <!-- <div class="checkbox">
-                  <label><input type="checkbox" value="" checked>Remember me</label>
-                </div> -->
                   <button type="submit" class="btn my-modal-btn btn-block"><span class="glyphicon glyphicon-ok"></span> Register</button>
               </form>
             </div>
@@ -210,12 +199,12 @@
               <h4 class="my-modal-h4"><span class="glyphicon glyphicon-file"></span> Update Info</h4>
             </div>
             <div class="modal-body" style="padding:40px 50px;">
-              <form id="update-info-form" role="form">
+              <form enctype="multipart/form-data" action="/update_info" method="POST" id="update-info-form" role="form">
                 <div class="form-group">
                   <label for="username"><span class="glyphicon glyphicon-user"></span> Username*</label>
-                  <span id="update-info-username-ok" class="glyphicon glyphicon-ok update-info-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"> </span>
-                  <span id="update-info-username-empty" class="glyphicon glyphicon-remove update-info-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Username should not be empty.</span>
-                  <input type="text" class="form-control" id="update-info-username" placeholder="Enter username" >
+                  <!-- <span id="update-info-username-ok" class="glyphicon glyphicon-ok update-info-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"> </span>
+                  <span id="update-info-username-empty" class="glyphicon glyphicon-remove update-info-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Username should not be empty.</span> -->
+                  <input type="text" class="form-control" name="update-info-username" placeholder="Enter username" required>
                 </div>
                 <!-- <div class="form-group">
                     <label for="gender"><span class="glyphicon glyphicon-heart"></span> Gender*</label><br />
@@ -228,15 +217,15 @@
                 </div> -->
                 <div class="form-group">
                   <label for="password"><span class="glyphicon glyphicon-eye-open"></span> Password*</label>
-                  <span id="update-info-password-ok" class="glyphicon glyphicon-ok update-info-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
-                  <span id="update-info-password-empty" class="glyphicon glyphicon-remove update-info-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password should not be empty.</span>
-                  <input type="password" class="form-control" id="update-info-password" placeholder="Enter password">
+                  <!-- <span id="update-info-password-ok" class="glyphicon glyphicon-ok update-info-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
+                  <span id="update-info-password-empty" class="glyphicon glyphicon-remove update-info-password-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password should not be empty.</span> -->
+                  <input type="password" class="form-control" name="update-info-password" placeholder="Enter password" required>
                 </div>
                 <div class="form-group">
                   <label for="checkPassword"><span class="glyphicon glyphicon-eye-open"></span> Check Password*</label>
-                  <span id="update-info-checkPassword-ok" class="glyphicon glyphicon-ok update-info-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
-                  <span id="update-info-checkPassword-notMatch" class="glyphicon glyphicon-remove update-info-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password does not match.</span>
-                  <input type="password" class="form-control" id="update-info-checkPassword" placeholder="Check password">
+                  <!-- <span id="update-info-checkPassword-ok" class="glyphicon glyphicon-ok update-info-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
+                  <span id="update-info-checkPassword-notMatch" class="glyphicon glyphicon-remove update-info-checkPassword-check" style="display:none; margin-left:40px; font-weight:bold; color:#d9534f;"> Password does not match.</span> -->
+                  <input type="password" class="form-control" name="update-info-checkPassword" placeholder="Check password" required>
                 </div>
                   <button type="submit" class="btn my-modal-btn btn-block"><span class="glyphicon glyphicon-ok"></span>Confirm</button>
               </form>
@@ -258,14 +247,14 @@
           <div class="modal-content">
             <div class="modal-header" style="padding:35px 50px;">
               <button type="button" class="close" style="color:white !important;" data-dismiss="modal">&times;</button>
-              <h4 class="my-modal-h4"><span class="glyphicon glyphicon-file"></span>Enter Vote URL</h4>
+              <h4 class="my-modal-h4"><span class="glyphicon glyphicon-file"></span>Enter Vote ID</h4>
             </div>
             <div class="modal-body" style="padding:40px 50px;">
-              <form id="update-info-form" role="form">
+              <form enctype="multipart/form-data" action="/input_id" method="POST" id="update-info-form" role="form">
                 <div class="form-group">
-                  <input type="text" class="form-control" id="update-info-username" placeholder="Enter username" >
+                  <input type="text" class="form-control" name="input_id" placeholder="Enter ID" >
                 </div>
-                  <button type="submit" class="btn my-modal-btn btn-block"><span class="glyphicon glyphicon-ok"></span>Confirm</button>
+                  <button type="submit" class="btn my-modal-btn btn-block"><span class="glyphicon glyphicon-ok"></span>Submit</button>
               </form>
             </div>
             <div class="modal-footer">
@@ -280,6 +269,15 @@
     </div>
 
 </body>
+
+<script>
+    function validateForm() {
+        if($('#password1').val() != $('#password2').val()){
+            alert("Try again! You input two different passwords.");
+            return false;
+        }
+    }
+</script>
 
 
 </html>

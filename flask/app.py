@@ -220,21 +220,21 @@ def receive_a_vote():
 	db_func.execute_sql_insert(query)
 	return render_template('thanks.html', **locals())
 
-
-
-
 @app.route("/view_result/<vote_id>")
 def view_result(vote_id):
 	results = db_func.check_vote_method(vote_id)
-
 	# Check whether vote_id exists
 	if (results == 0):
 		warning = "Sorry, the vote does not exist."
 		return render_template('notification.html', **locals())
-	else:
-		vote_name = results[1]
-		expire_time = results[3]
-		vote_method = results[4]
+	vote_name = results[1]
+	expire_time = results[3]
+	vote_method = results[4]
+	query = "SELECT * FROM votes_info WHERE creator_id='" + str(session['user_id']) + "' AND vote_id='" + str(vote_id) + "'"
+	correct_vote = db_func.execute_sql_select(query)
+	if len(correct_vote) == 0:
+		warning = "You are not authorized to view this!"
+		return render_template('notification.html', ** locals())
 
 	results = db_func.get_candidate_list(vote_id)
 

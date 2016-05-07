@@ -196,10 +196,18 @@ def insert_new_list_elem(list_id, candidate_id, rank):
 	conn.commit()
 	cursor.close()
 
-def execute_sql(sql):
+def execute_sql_select(sql):
 	cursor = conn.cursor()
 	cursor.execute(sql)
 	result = cursor.fetchall()
 	conn.commit()
 	cursor.close()
 	return result
+
+def execute_sql_insert(sql):
+	cursor = conn.cursor()
+	cursor.execute(sql)
+	conn.commit()
+	row_id = cursor.lastrowid
+	cursor.close()
+	return row_id

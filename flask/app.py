@@ -167,7 +167,7 @@ def view_result(vote_id):
 	elif vote_method == 2:
 		vote_method = "Ranking"
 		query = "SELECT * FROM ranking_list_info WHERE vote_id='" + str(vote_id) + "'"
-		results = db_func.execute_sql(query)
+		results = db_func.execute_sql_select(query)
 		
 		list_table = {}
 		index = 0
@@ -184,7 +184,7 @@ def view_result(vote_id):
 		print "Print all list:"
 		for i in range(list_num):
 			query = "SELECT * FROM list_element WHERE list_id='" + str(list_table[i, 0]) + "' ORDER BY rank ASC"
-			results = db_func.execute_sql(query)
+			results = db_func.execute_sql_select(query)
 			list_table[i, 1] = []
 			for row in results:
 				list_table[i, 1].append(row[2]) #candidate id

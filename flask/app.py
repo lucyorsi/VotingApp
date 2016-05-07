@@ -73,6 +73,17 @@ def logout():
 	session.pop('user_id', None)
 	return render_template('index.html')
 
+@app.route("/home")
+def home():
+	if session.['user_name']:
+		query = "SELECT * FROM votes_info WHERE creator_id=" + session.['user_name']
+		initiated_votes = db_func.execute_sql_select(query)
+		query = "SELECT * FROM qualified_votes WHERE voter_id=" + session.['user_name']
+		cast_votes = db_func.execute_sql_select(query)
+		return render_template('home.html', **locals())
+	else
+		warning = "You are not logged in!"
+		return render_template('notification.html', ** locals())
 
 @app.route("/cast_a_vote/<vote_id>")
 def cast_a_vote(vote_id):

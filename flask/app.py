@@ -45,6 +45,8 @@ def register():
 
 @app.route("/login", methods=["POST"])
 def login():
+	login_email = request.form['login-email']
+	vote_method = request.form['login-password']
 	return render_template('index.html')
 
 

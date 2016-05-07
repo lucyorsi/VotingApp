@@ -211,3 +211,18 @@ def execute_sql_insert(sql):
 	row_id = cursor.lastrowid
 	cursor.close()
 	return row_id
+
+def execute_sql_insert_user_info(username, password, email):
+	cursor = conn.cursor()
+	error = 0
+	try:
+		cursor.execute("INSERT INTO user_info (user_name, password, user_email) VALUES(%s, MD5(%s), %s)", (username, password, email))
+	except:
+		error = 1
+		print "duplicate entry"
+		return error, 0
+	conn.commit()
+	result = cursor.fetchall();
+	row_id = cursor.lastrowid
+	cursor.close()
+	return error, row_id

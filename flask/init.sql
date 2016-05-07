@@ -10,7 +10,7 @@ create table user_info (
 	user_id integer primary key auto_increment,
 	user_name varchar(255) not null,
 	password varchar(255) not null,
-	user_email varchar(255) not null
+	user_email varchar(255) not null unique
 );
 
 create table votes_info (

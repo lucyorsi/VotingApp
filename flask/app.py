@@ -33,6 +33,7 @@ def setup():
 def register():
 	return render_template('index.html')
 
+
 @app.route("/login", methods=["POST"])
 def login():
 	return render_template('index.html')

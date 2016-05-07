@@ -114,7 +114,7 @@
               <h4 class="my-modal-h4"><span class="glyphicon glyphicon-lock"></span> Login</h4>
             </div>
             <div class="modal-body" style="padding:40px 50px;">
-              <form id="login-form" role="form">
+              <form enctype="multipart/form-data" action="/login" method="POST" id="login-form" role="form">
                 <div class="form-group">
                   <label for="usrname"><span class="glyphicon glyphicon-envelope"></span> Email</label>
                   <input type="text" class="form-control" name="login-email" placeholder="Enter email">
@@ -149,7 +149,7 @@
               <h4 class="my-modal-h4"><span class="glyphicon glyphicon-file"></span> Sign up</h4>
             </div>
             <div class="modal-body" style="padding:40px 50px;">
-              <form id="signup-form" role="form">
+              <form enctype="multipart/form-data" action="/register" method="POST" id="signup-form" role="form">
                 <div class="form-group">
                   <label for="email"><span class="glyphicon glyphicon-envelope"></span> Email*</label>
                   <!-- <span id="signup-email-ok" class="glyphicon glyphicon-ok signup-email-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"></span>
@@ -198,7 +198,7 @@
               <h4 class="my-modal-h4"><span class="glyphicon glyphicon-file"></span> Update Info</h4>
             </div>
             <div class="modal-body" style="padding:40px 50px;">
-              <form id="update-info-form" role="form">
+              <form enctype="multipart/form-data" action="/update_info" method="POST" id="update-info-form" role="form">
                 <div class="form-group">
                   <label for="username"><span class="glyphicon glyphicon-user"></span> Username*</label>
                   <!-- <span id="update-info-username-ok" class="glyphicon glyphicon-ok update-info-username-check" style="display:none; margin-left:40px; font-weight:bold; color:#4cae4c;"> </span>

@@ -37,10 +37,11 @@ def register():
 	error, row_id = db_func.execute_sql_insert_user_info(user_name, password, user_email)
 	print error, row_id
 	if error == 1:
-		warning = "This email has already been used"
-		return render_template('sorry.html', **locals())
+		warning = "This email has already been used!"
+		return render_template('notification.html', **locals())
 	else:
-		return render_template('index.html')
+		success = "You have successfully registered an account!"
+		return render_template('notification.html', **locals())
 
 
 @app.route("/login", methods=["POST"])

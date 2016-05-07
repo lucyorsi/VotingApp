@@ -1,13 +1,17 @@
 # all the imports
 import os
+import functools
 from flask import Flask, render_template, url_for, request, session, g, redirect, abort, flash
 from flask.ext.mysql import MySQL
+from flask.ext.socketio import SocketIO, send
 import db_func
 import time
 import datetime
 import socket
 from binascii import hexlify
 import flask.ext.login as flask_login
+from flask_login import current_user, login_user
+from flask_socketio import disconnect
 
 app = Flask(__name__)
 
@@ -22,9 +26,13 @@ users = {}
 
 @login_manager.user_loader
 def load_user(unique_id):
+    unique_id = str(unique_id)
     if unique_id in users:
         return users[unique_id]
     else:
+        print "could not load user"
+        print users
+        print unique_id
         return None
 
 class User:
@@ -38,7 +46,8 @@ class User:
         self.is_anonymous = False
         
     def get_id():
-        return self.unique_id
+        print "get_id", self.unique_id
+        return unicode(self.unique_id)
 
 @app.route("/init_database")
 def init_database():
@@ -101,10 +110,12 @@ def login():
         session['user_name'] = user_name
         session['user_id'] = user_id
 
-        new_user = User(user_name, user_id, user_key)
-        flask_login.login_user(new_user)
+        new_user = User(user_name, user_id, str(user_key))
+        new_user.is_authenticated = True
+        login_user(new_user)
 
-        users[user_key] = new_user
+        users[new_user.unique_id] = new_user
+        print "after adding new_user", users
 
         return redirect('/home')
     else:
@@ -459,8 +470,68 @@ def create_vote():
 
     return render_template('setup_complete.html', **locals())
 
+def authenticated_only(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated:
+            print "not authed"
+            print current_user.user_id
+            return redirect("/")
+        else:
+            return f(*args, **kwargs)
+    return wrapped
+
+@app.route("/crypto_elections")
+@app.route("/crypto_elections/<type_of_election>/<election_id>")
+@authenticated_only
+def crypto_election(election_id):
+    if not election_id:
+        # bad link
+        return redirect("/")
+
+    else:
+        # they have logged
+        query = "SELECT vote_id FROM user_info WHERE voter_id=" + current_user.user_id
+        results = db_func.execute_sql_select(query)
+        
+        if election_id not in results:
+            return redirect("/")
+
+        else:
+            current_user.authed_elections[election_id] = True
+
+            return render_template("crypto_" + election_type, **locals()) # TODO: ????
+
+#### WEBSOCKET FUNCTIONS ####
+socketio = SocketIO(app)
+
+
+@socketio.on("connect")
+def connect():
+    print "socketio connection"
+
+@socketio.on("join_election")
+@authenticated_only
+def join_election(election_id):
+    if current_user.authed_elections[election_id]:
+        join_room(election_id)
+        unique_id_table = get_unique_id_table(election_id)
+        send("unique_id_table", unique_id_table)
+
+    else:
+        send("auth_failed")
+
+@socketio.on("public_key_share")
+@authenticated_only
+def public_key_share(key_share):
+    rooms = rooms()
+    print rooms
+
+
+
 
 if __name__ == "__main__":
     app.debug = True
     # app.run()
-    app.run(host="0.0.0.0",port=port_number)
+    #app.run(host="0.0.0.0",port=port_number)
+    socketio.run(app, host = "0.0.0.0")

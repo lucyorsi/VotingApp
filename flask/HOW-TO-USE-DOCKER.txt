@@ -88,6 +88,10 @@ pip install flask
 
 pip install flask-mysql
 
+pip install flask-login
+
+pip install flask-socketio
+
 docker run -it -d -p 5000:5000 --name 4140 -v /home/ysong4/Documents/project-igroup/flask/:/tmp/ lucyorsi/igroup-votingserver
 
 
@@ -95,7 +99,7 @@ docker run -it -d -p 5000:5000 --name 4140 -v /home/ysong4/Documents/project-igr
 
 mysql -u root -p
 
-create database DB_NAME;
+reate database DB_NAME;
 
 show databases;
 

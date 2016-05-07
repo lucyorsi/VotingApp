@@ -253,8 +253,9 @@ def receive_a_vote():
         for i in range(candidate_num):
             db_func.cast_majority_vote(vote_id, candidate_list[i, 1], candidate_list[i, 2])
 
-    query = "UPDATE qualified_voters SET already_vote=1 WHERE voter_id='" + str(session['user_name']) + "' AND vote_id='" + str(vote_id) + "'" 
-    db_func.execute_sql_insert(query)
+    if ('user_id' in session):
+	    query = "UPDATE qualified_voters SET already_vote=1 WHERE voter_id='" + str(session['user_id']) + "' AND vote_id='" + str(vote_id) + "'" 
+	    db_func.execute_sql_insert(query)
     return render_template('thanks.html', **locals())
 
 @app.route("/view_result/<vote_id>")

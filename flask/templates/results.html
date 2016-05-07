@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="..{{ url_for('static', filename='css/index.css') }}">
     <link rel="stylesheet" href="..{{ url_for('static', filename='css/setup_complete.css') }}">
     <link rel="stylesheet" href="..{{ url_for('static', filename='css/vote.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.1/Chart.bundle.min.js"></script>
 
 	</head>
 <body>
@@ -51,9 +52,61 @@
 			<p class="my_p_1 my_p_2"> Expire Date: <span style="color:black">{{expire_time}}</span></p>
 			<br>
 			<p class="my_p_1 my_p_2"> Vote Method: <span style="color:black">{{vote_method}}</span></p>
+
             {%if warning %}
                 <br>
                 <p class="my_p_1" style="color: #e38b75;">{{warning}}</p>
+            {% else %}
+                <div class="col-md-12 col-sm-12 col-xs-12">
+                    <div style="margin:auto; width:60%;">
+                        <canvas id="myChart" ></canvas>
+                    </div>
+                </div>
+                <script>
+                var ctx = document.getElementById("myChart");
+                var myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                            {% for i in range(candidate_num-1) %}
+                                "{{result_table[i, 1]}}", 
+                            {% endfor %}
+                            "{{result_table[candidate_num - 1, 1]}}"
+                            ],
+                        datasets: [{
+                            {% if vote_method is equalto "Single" %}
+                                label: '# of Votes',
+                            {% elif vote_method is equalto "Ranking" %}
+                                label: '# of Votes in Last Round',
+                            {% elif vote_method is equalto "Weight" %}
+                                label: '# of Points',
+                            {% elif vote_method is equalto "Majority" %}
+                                label: '# of Yes',
+                            {% endif %}
+                            backgroundColor: "rgba(255,99,132,0.2)",
+                            borderColor: "rgba(255,99,132,1)",
+                            borderWidth: 1,
+                            hoverBackgroundColor: "rgba(255,99,132,0.4)",
+                            hoverBorderColor: "rgba(255,99,132,1)",
+                            data: [
+                            {% for i in range(candidate_num - 1) %}
+                                {{result_table[i, 2]}}, 
+                            {% endfor %}
+                            {{result_table[candidate_num - 1, 2]}}
+                            ]
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero:true
+                                }
+                            }]
+                        }
+                    }
+                });
+                </script>
             {% endif %}
 
             {% if vote_method is equalto "Single" %}

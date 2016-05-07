@@ -99,6 +99,7 @@ def cast_a_vote(vote_id):
 		warning = "Sorry, the vote does not exist."
 		return render_template('notification.html', **locals())
 	else:
+		vote_id = results[0]
 		vote_name = results[1]
 		expire_time = results[3]
 		vote_method = results[4]
@@ -108,22 +109,33 @@ def cast_a_vote(vote_id):
 			warning = "Sorry, the vote has already ended."
 			return render_template('notification.html', **locals())
 		else:
-			results = db_func.get_candidate_list(vote_id)
-			candidate_num = len(results)
-			candidate_list = {}
-			i = 0
-			for row in results:
-				candidate_list[i, 0] = row[2] #candidate name
-				candidate_list[i, 1] = row[0] #candidate id
-				i = i + 1
-			if (vote_method == 1):
-				return render_template('vote_single.html', **locals())
-			elif (vote_method == 2):
-				return render_template('vote_ranking.html', **locals())
-			elif (vote_method == 3):
-				return render_template('vote_weight.html', **locals())
-			elif (vote_method == 4):
-				return render_template('vote_majority.html', **locals())
+			#Check vote qualification
+			if results[5] == 2:
+				query = "SELECT * FROM qualified_voters WHERE vote_id=" + vote_id + "AND voter_id=" + session['user_id']
+				voter_list = db_func.execute_sql_select(query)
+				if (len(voter_list) == 0):
+					warning = "Sorry, you are not allowed to vote."
+					return render_template('notification.html', **locals())
+				elif (voter_list[0][2] == 1):
+					warning = "Sorry, you are already voted."
+					return render_template('notification.html', **locals())
+				else:
+					results = db_func.get_candidate_list(vote_id)
+					candidate_num = len(results)
+					candidate_list = {}
+					i = 0
+					for row in results:
+						candidate_list[i, 0] = row[2] #candidate name
+						candidate_list[i, 1] = row[0] #candidate id
+						i = i + 1
+					if (vote_method == 1):
+						return render_template('vote_single.html', **locals())
+					elif (vote_method == 2):
+						return render_template('vote_ranking.html', **locals())
+					elif (vote_method == 3):
+						return render_template('vote_weight.html', **locals())
+					elif (vote_method == 4):
+						return render_template('vote_majority.html', **locals())
 
 
 @app.route("/receive_a_vote", methods=["POST"])
@@ -192,7 +204,8 @@ def receive_a_vote():
 		for i in range(candidate_num):
 			db_func.cast_majority_vote(vote_id, candidate_list[i, 1], candidate_list[i, 2])
 
-
+	query = "UPDATE qualilified_voter SET already_vote=1 WHERE voter_id=" + session['user_name']
+	db_func.execute_sql_insert(query)
 	return render_template('thanks.html', **locals())
 
 

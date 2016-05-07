@@ -47,8 +47,7 @@ def create_database():
 		creator_id integer,
 		expire_time datetime not null,
 		vote_method integer not null,
-		secure_level integer not null, 
-		vote_end integer not null,
+		secure_level integer not null,
 		foreign key (creator_id) references user_info(user_id)
 	);''')
 	conn.commit()
@@ -100,15 +99,20 @@ def create_database():
 
 	return
 
-def create_vote(vote_name, expire_time, vote_method, candidate_upload_text):
+def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secure_level, voter_id_text):
 	cursor = conn.cursor()
-	cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level, vote_end) VALUES (%s, %s, %s, 1, 0)", (vote_name, expire_time, vote_method))
+	cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level) VALUES (%s, %s, %s, %s)", (vote_name, expire_time, vote_method, secure_level))
 	conn.commit()
 
 	vote_id = cursor.lastrowid
 	for index in range(len(candidate_upload_text)):
 		cursor.execute("INSERT INTO candidates_list (vote_id, candidate_name) VALUES(%s, %s)", (vote_id, candidate_upload_text[index]))
 		conn.commit()
+
+	if(secure_level == 2):
+		for index in range(len(voter_upload_text)):
+			cursor.execute("INSERT INTO qualified_voters (vote_id, voter_id, already_vote) VALUES(%s, %s, 0)", (vote_id, voter_id_list[index]))
+			conn.commit()
 	cursor.close()
 
 	return vote_id

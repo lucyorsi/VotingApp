@@ -6,6 +6,7 @@ import db_func
 import time
 import datetime
 import socket
+from binascii import hexlify
 
 app = Flask(__name__)
 
@@ -17,11 +18,10 @@ port_number = 5000
 def init_database():
 	db_func.create_database()
 	return render_template('index.html')
-	
 
 @app.route("/")
 def main():
-    return render_template('index.html')
+	return render_template('index.html')
 
 @app.route("/setup")
 def setup():
@@ -32,6 +32,13 @@ def setup():
 		secure_level = 1
 		return render_template('setup.html', **locals())
 
+@app.route("/input_id", methods=["POST"])
+def input_id():
+	print "haha"
+	input_id = request.form["input_id"]
+	print input_id
+	print "haha"
+	return redirect("cast_a_vote/" + str(input_id))
 
 
 @app.route("/register", methods=["POST"])
@@ -39,7 +46,8 @@ def register():
 	user_name = request.form["signup-username"]
 	user_email = request.form["signup-email"]
 	password =  request.form["signup-password"]
-	error, row_id = db_func.execute_sql_insert_user_info(user_name, password, user_email)
+	key = hexlify(os.urandom(512))
+	error, row_id = db_func.execute_sql_insert_user_info(user_name, password, user_email, key)
 	print error, row_id
 	if error == 1:
 		warning = "This email has already been used!"
@@ -109,13 +117,13 @@ def cast_a_vote(vote_id):
 		vote_method = results[4]
 		# Check whether vote has expired
 		current_time = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S")
-		if expire_time < current_time:
+		if datetime.datetime.strftime(expire_time, "%Y-%m-%d %H:%M:%S") < current_time:
 			warning = "Sorry, the vote has already ended."
 			return render_template('notification.html', **locals())
 		else:
 			#Check vote qualification
 			if results[5] == 2:
-				query = "SELECT * FROM qualified_voters WHERE vote_id=" + vote_id + "AND voter_id=" + session['user_id']
+				query = "SELECT * FROM qualified_voters WHERE vote_id='" + str(vote_id) + "' AND voter_id='" + str(session['user_id']) + "'"
 				voter_list = db_func.execute_sql_select(query)
 				if (len(voter_list) == 0):
 					warning = "Sorry, you are not allowed to vote."
@@ -123,23 +131,23 @@ def cast_a_vote(vote_id):
 				elif (voter_list[0][2] == 1):
 					warning = "Sorry, you are already voted."
 					return render_template('notification.html', **locals())
-				else:
-					results = db_func.get_candidate_list(vote_id)
-					candidate_num = len(results)
-					candidate_list = {}
-					i = 0
-					for row in results:
-						candidate_list[i, 0] = row[2] #candidate name
-						candidate_list[i, 1] = row[0] #candidate id
-						i = i + 1
-					if (vote_method == 1):
-						return render_template('vote_single.html', **locals())
-					elif (vote_method == 2):
-						return render_template('vote_ranking.html', **locals())
-					elif (vote_method == 3):
-						return render_template('vote_weight.html', **locals())
-					elif (vote_method == 4):
-						return render_template('vote_majority.html', **locals())
+
+			results = db_func.get_candidate_list(vote_id)
+			candidate_num = len(results)
+			candidate_list = {}
+			i = 0
+			for row in results:
+				candidate_list[i, 0] = row[2] #candidate name
+				candidate_list[i, 1] = row[0] #candidate id
+				i = i + 1
+			if (vote_method == 1):
+				return render_template('vote_single.html', **locals())
+			elif (vote_method == 2):
+				return render_template('vote_ranking.html', **locals())
+			elif (vote_method == 3):
+				return render_template('vote_weight.html', **locals())
+			elif (vote_method == 4):
+				return render_template('vote_majority.html', **locals())
 
 
 @app.route("/receive_a_vote", methods=["POST"])
@@ -152,8 +160,8 @@ def receive_a_vote():
 
 	vote_name = request.form['vote_name']
 	vote_id = int(request.form['vote_id'])
-
 	candidate_num = int(request.form['candidate_num'])
+
 	results = db_func.get_candidate_list(vote_id)
 	candidate_list = {}
 	i = 0
@@ -208,7 +216,7 @@ def receive_a_vote():
 		for i in range(candidate_num):
 			db_func.cast_majority_vote(vote_id, candidate_list[i, 1], candidate_list[i, 2])
 
-	query = "UPDATE qualilified_voter SET already_vote=1 WHERE voter_id=" + session['user_name']
+	query = "UPDATE qualified_voters SET already_vote=1 WHERE voter_id='" + str(session['user_name']) + "' AND vote_id='" + str(vote_id) + "'" 
 	db_func.execute_sql_insert(query)
 	return render_template('thanks.html', **locals())
 

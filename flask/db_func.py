@@ -38,7 +38,8 @@ def create_database():
 		user_id integer primary key auto_increment,
 		user_name varchar(255) not null,
 		password varchar(255) not null,
-		user_email varchar(255) not null unique
+		user_email varchar(255) not null unique,
+		user_key varchar(1024) not null
 	);''')
 	conn.commit()
 	cursor.execute('''create table votes_info (
@@ -223,11 +224,11 @@ def execute_sql_insert(sql):
 	cursor.close()
 	return row_id
 
-def execute_sql_insert_user_info(username, password, email):
+def execute_sql_insert_user_info(username, password, email, user_key):
 	cursor = conn.cursor()
 	error = 0
 	try:
-		cursor.execute("INSERT INTO user_info (user_name, password, user_email) VALUES(%s, MD5(%s), %s)", (username, password, email))
+		cursor.execute("INSERT INTO user_info (user_name, password, user_email, user_key) VALUES(%s, MD5(%s), %s, %s)", (username, password, email, user_key))
 	except:
 		error = 1
 		print "duplicate entry"

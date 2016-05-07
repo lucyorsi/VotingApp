@@ -37,7 +37,16 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
 	login_email = request.form['login-email']
-	vote_method = request.form['login-password']
+	login_password = request.form['login-password']
+	query = "SELECT * FROM user_info WHERE password=MD5('" + str(login_password) + "') AND user_email='" + str(login_email) + "'"
+	results = db_func.execute_sql_select(query)
+	if( len(results) == 1):
+		#login success
+		print "find one!"
+	else:
+		print "fail to find one!"
+
+
 	return render_template('index.html')
 
 
@@ -48,7 +57,7 @@ def cast_a_vote(vote_id):
 	# Check whether vote_id exists
 	if (results == 0):
 		warning = "Sorry, the vote does not exist."
-		return render_template('sorry.html', **locals())
+		return render_template('notification.html', **locals())
 	else:
 		vote_name = results[1]
 		expire_time = results[3]
@@ -151,7 +160,7 @@ def view_result(vote_id):
 	# Check whether vote_id exists
 	if (results == 0):
 		warning = "Sorry, the vote does not exist."
-		return render_template('sorry.html', **locals())
+		return render_template('notification.html', **locals())
 	else:
 		vote_name = results[1]
 		expire_time = results[3]

@@ -45,10 +45,16 @@
 
     <div class="row" >
 
-		<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading" style="margin-top:40px"> Error! </h1>
-		<p class="col-md-12 col-sm-12 col-xs-12 my_p_1" style="margin-top:20px">{{warning}}/p>
+        {% if warning %}
+            <h1 class="col-md-12 col-sm-12 col-xs-12 my_heading" style="margin-top:40px"> Error! </h1>
+            <p class="col-md-12 col-sm-12 col-xs-12 my_p_1" style="margin-top:20px">{{warning}} </p>
+        {% else %}
+            <h1 class="col-md-12 col-sm-12 col-xs-12 my_heading" style="margin-top:40px"> Success! </h1>
+            <p class="col-md-12 col-sm-12 col-xs-12 my_p_1" style="margin-top:20px">{{success}} </p>
+        {% endif %}
+		
 		<div class="col-md-12 col-sm-12 col-xs-12">
-			<button class= "btn-big btn-return-1 hvr-grow "> Return to homepage </button>
+			<button class= "btn-big btn-return-1 hvr-grow " href="/"> Return to homepage </button>
 		</div>
 
 	</div>

@@ -102,7 +102,7 @@ def login():
         session['user_id'] = user_id
 
         new_user = User(user_name, user_id, user_key)
-        login_user(new_user)
+        flask_login.login_user(new_user)
 
         users[user_key] = new_user
 

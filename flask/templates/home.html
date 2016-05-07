@@ -49,7 +49,7 @@
                             {% for i in range(initiated_votes_num - 1) %}
                                 <div class="vote-info my-font-2">
                                     <div>
-                                        <a class="hvr-sweep-to-right vote-info-title">Name: {{initiated_votes[i][1]}}</a>
+                                        <a class="hvr-sweep-to-right vote-info-title" href="/view_result/{{initiated_votes[i][0]}}">Name: {{initiated_votes[i][1]}}</a>
                                     </div>
                                     <div>
                                         <p class="vote-info-elem">ID: {{initiated_votes[i][0]}}</p>
@@ -61,7 +61,7 @@
                             {% endfor %}
                             <div class="vote-info my-font-2">
                                 <div>
-                                    <a class="hvr-sweep-to-right vote-info-title">Name: {{initiated_votes[initiated_votes_num - 1][1]}}</a>
+                                    <a class="hvr-sweep-to-right vote-info-title" href="/view_result/{{initiated_votes[initiated_votes_num -1][0]}}">Name: {{initiated_votes[initiated_votes_num - 1][1]}}</a>
                                 </div>
                                 <div>
                                     <p class="vote-info-elem">ID: {{initiated_votes[initiated_votes_num - 1][0]}}</p>
@@ -89,7 +89,7 @@
                             {% for i in range(cast_votes_num - 1) %}
                                 <div class="vote-info my-font-2">
                                     <div>
-                                        <a class="hvr-sweep-to-left vote-info-title-2" >Name: {{cast_votes[i][1]}}</a>
+                                        <a class="hvr-sweep-to-left vote-info-title-2" href="/cast_a_vote/{{cast_votes[i][0]}}">Name: {{cast_votes[i][1]}}</a>
                                     </div>
                                     <div>
                                         <p class="vote-info-elem">ID: {{cast_votes[i][0]}}</p>
@@ -101,7 +101,7 @@
                             {% endfor %}
                             <div class="vote-info my-font-2">
                                 <div>
-                                    <a class="hvr-sweep-to-left vote-info-title-2" >Name: {{cast_votes[cast_votes_num - 1][1]}}</a>
+                                    <a class="hvr-sweep-to-left vote-info-title-2" href="/cast_a_vote/{{cast_votes[cast_votes_num -1][0]}}">Name: {{cast_votes[cast_votes_num - 1][1]}}</a>
                                 </div>
                                 <div>
                                     <p class="vote-info-elem">ID: {{cast_votes[cast_votes_num - 1][0]}}</p>

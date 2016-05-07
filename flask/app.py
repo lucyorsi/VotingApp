@@ -78,7 +78,7 @@ def login():
 
 @app.route("/logout")
 def logout():
-	session.pop('username', None)
+	session.pop('user_name', None)
 	session.pop('user_id', None)
 	return render_template('index.html')
 

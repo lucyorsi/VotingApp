@@ -53,102 +53,74 @@
 			<br>
 			<p class="my_p_1 my_p_2"> Vote Method: <span style="color:black">{{vote_method}}</span></p>
 
-            {%if warning %}
-                <br>
-                <p class="my_p_1" style="color: #e38b75;">{{warning}}</p>
-            {% else %}
-                <div class="col-md-12 col-sm-12 col-xs-12">
-                    <div style="margin:auto; width:60%;">
-                        <canvas id="myChart" ></canvas>
-                    </div>
-                </div>
-                <script>
-                var ctx = document.getElementById("myChart");
-                var myChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: [
-                            {% for i in range(candidate_num-1) %}
-                                "{{result_table[i, 1]}}", 
-                            {% endfor %}
-                            "{{result_table[candidate_num - 1, 1]}}"
-                            ],
-                        datasets: [{
-                            {% if vote_method is equalto "Single" %}
-                                label: '# of Votes',
-                            {% elif vote_method is equalto "Ranking" %}
-                                label: '# of Votes in Last Round',
-                            {% elif vote_method is equalto "Weight" %}
-                                label: '# of Points',
-                            {% elif vote_method is equalto "Majority" %}
-                                label: '# of Yes',
-                            {% endif %}
-                            backgroundColor: "rgba(255,99,132,0.2)",
-                            borderColor: "rgba(255,99,132,1)",
-                            borderWidth: 1,
-                            hoverBackgroundColor: "rgba(255,99,132,0.4)",
-                            hoverBorderColor: "rgba(255,99,132,1)",
-                            data: [
-                            {% for i in range(candidate_num - 1) %}
-                                {{result_table[i, 2]}}, 
-                            {% endfor %}
-                            {{result_table[candidate_num - 1, 2]}}
-                            ]
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            yAxes: [{
-                                ticks: {
-                                    beginAtZero:true
-                                }
-                            }]
-                        }
-                    }
-                });
-                </script>
-            {% endif %}
+            <input style="display:none;" type="number" name="vote_id" id="vote_id" value="{{vote_id}}">
 
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div style="margin:auto; width:60%;">
+                    <canvas id="myChart" ></canvas>
+                </div>
+            </div>
+            <script>
+            var ctx = document.getElementById("myChart");
+            var myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        {% for i in range(candidate_num-1) %}
+                            "{{result_table[i, 1]}}", 
+                        {% endfor %}
+                        "{{result_table[candidate_num - 1, 1]}}"
+                        ],
+                    datasets: [{
+                        {% if vote_method is equalto "Single" %}
+                            label: '# of Votes',
+                        {% elif vote_method is equalto "Ranking" %}
+                            label: '# of Votes in Last Round',
+                        {% elif vote_method is equalto "Weight" %}
+                            label: '# of Points',
+                        {% elif vote_method is equalto "Majority" %}
+                            label: '# of Yes',
+                        {% endif %}
+                        backgroundColor: "rgba(255,99,132,0.2)",
+                        borderColor: "rgba(255,99,132,1)",
+                        borderWidth: 1,
+                        hoverBackgroundColor: "rgba(255,99,132,0.4)",
+                        hoverBorderColor: "rgba(255,99,132,1)",
+                        data: [
+                        {% for i in range(candidate_num - 1) %}
+                            {{result_table[i, 2]}}, 
+                        {% endfor %}
+                        {{result_table[candidate_num - 1, 2]}}
+                        ]
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero:true
+                            }
+                        }]
+                    }
+                }
+            });
+            </script>
             {% if vote_method is equalto "Single" %}
                 <br>
                 <p class="my_p_1 my_p_2"> Current winner:</p>
-                {% for i in range(count_winner) %}
-                    <p class="my_p_1 my_p_2" style="color:black"> {{winner[i]}}</p>
-                {% endfor %}
-                {% for i in range(candidate_num) %}
-                    <p class="my_p_1 my_p_2" style="color:black"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
-                {% endfor %}
+                <pre id="winner" class="my_p_1 my_p_2" style="color:black; border:0; background:white;"> {{winner}}</pre>
             {% elif vote_method is equalto "Ranking" %}
                 <br>
                 <p class="my_p_1 my_p_2"> Current winner: </p>
-                <p class="my_p_1 my_p_2" style="color:black"> {{winner}}</p>
-                <br>
-                <p class="my_p_1 my_p_2"> Last round each candidates' vote: </p>
-                {% for i in range(candidate_num) %}
-                    <p class="my_p_1 my_p_2" style="color:black"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
-                {% endfor %}
+                <pre id="winner" class="my_p_1 my_p_2" style="color:black; border:0; background:white;"> {{winner}}</pre>
             {% elif vote_method is equalto "Weight" %}
                 <br>
                 <p class="my_p_1 my_p_2"> Current winner:</p>
-                {% for i in range(count_winner) %}
-                    <p class="my_p_1 my_p_2" style="color:black"> {{winner[i]}}</p>
-                {% endfor %}
-                <br>
-                <p class="my_p_1 my_p_2"> Each candidates' total points</p>
-                {% for i in range(candidate_num) %}
-                    <p class="my_p_1 my_p_2" style="color:black"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
-                {% endfor %}
+                <pre id="winner" class="my_p_1 my_p_2" style="color:black; border:0; background:white;"> {{winner}}</pre>
             {% elif vote_method is equalto "Majority" %}
                 <br>
                 <p class="my_p_1 my_p_2"> Current winner:</p>
-                {% for i in range(count_winner) %}
-                    <p class="my_p_1 my_p_2" style="color:black"> {{winner[i]}}</p>
-                {% endfor %}
-                <br>
-                <p class="my_p_1 my_p_2"> Each candidates' total YES</p>
-                {% for i in range(candidate_num) %}
-                    <p class="my_p_1 my_p_2" style="color:black"> {{result_table[i, 1]}}: {{result_table[i, 2]}}</p>
-                {% endfor %}
+                <pre id="winner" class="my_p_1 my_p_2" style="color:black; border:0; background:white;"> {{winner}}</pre>
             {% endif %}
 
 		</div>
@@ -157,10 +129,39 @@
 		</div> -->
 		<div class="col-md-12 col-sm-12 col-xs-12">
 			<a class= "btn-big btn-return-1 hvr-grow" href="/"> Return to homepage </a>
+            <div class="row">
+                <hr style="width=100%;">
+            </div>
 		</div>
 
+
+
 	</div>
 
 	</div>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+    <script type="text/javascript" charset="utf-8">
+    $(document).ready(function(){
+        var socket = io.connect('http://' + document.domain + ':' + location.port + "/test{{vote_id}}");
+        socket.on('connect', function() {
+            socket.emit('my event', {data: 'I\'m connected!'});
+        });
+        socket.on('update_chart', function(data) {
+            data = JSON.parse(data);
+            len = data['result_table'].length;
+            var temp = [];
+            for(i = 0; i < len; i++ ){
+                temp[i] = data.result_table[i].vote_num
+            }
+            myChart.data.datasets[0].data = temp;
+            myChart.update();
+        });
+        socket.on('update_text', function(data) {
+            data = JSON.parse(data);
+            console.log(data.winner);
+            document.getElementById('winner').innerHTML = data.winner;
+        });
+    });
+    </script>
 </body>
 </html>

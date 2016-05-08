@@ -3,7 +3,7 @@ import os
 import functools
 from flask import Flask, render_template, url_for, request, session, g, redirect, abort, flash
 from flask.ext.mysql import MySQL
-from flask.ext.socketio import SocketIO, send
+from flask.ext.socketio import * #SocketIO, send, join_room
 import db_func
 import time
 import datetime
@@ -11,7 +11,7 @@ import socket
 from binascii import hexlify
 import flask.ext.login as flask_login
 from flask_login import current_user, login_user
-from flask_socketio import disconnect
+from flask_socketio import join_room  #disconnect
 
 app = Flask(__name__)
 
@@ -24,15 +24,25 @@ login_manager.init_app(app)
 
 users = {}
 
+def authenticated_only(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated:
+            print "not authed"
+            return redirect("/")
+        else:
+            return f(*args, **kwargs)
+    return wrapped
+
 @login_manager.user_loader
-def load_user(unique_id):
-    unique_id = str(unique_id)
-    if unique_id in users:
-        return users[unique_id]
+def load_user(user_id):
+    user_id = str(user_id)
+    if user_id in users:
+        return users[user_id]
     else:
         print "could not load user"
         print users
-        print unique_id
+        print user_id
         return None
 
 class User:
@@ -44,9 +54,11 @@ class User:
         self.is_authenticated = False
         self.is_active = False
         self.is_anonymous = False
+
+        self.authed_elections = {}
         
     def get_id():
-        print "get_id", self.unique_id
+        print "get_id", self.user_id
         return unicode(self.unique_id)
 
 @app.route("/init_database")
@@ -114,7 +126,7 @@ def login():
         new_user.is_authenticated = True
         login_user(new_user)
 
-        users[new_user.unique_id] = new_user
+        users[str(user_id)] = new_user
         print "after adding new_user", users
 
         return redirect('/home')
@@ -131,25 +143,24 @@ def logout():
     return render_template('index.html')
 
 @app.route("/home")
+@authenticated_only
 def home():
-    if session['user_name']:
-        query = "SELECT * FROM votes_info WHERE creator_id='" + str(session['user_id']) + "'"
-        initiated_votes = db_func.execute_sql_select(query)
-        query = "SELECT vote_id FROM qualified_voters WHERE voter_id='" + str(session['user_id']) + "'"
-        cast_votes_id = db_func.execute_sql_select(query)
-        print cast_votes_id
-        cast_votes = {}
-        for i in range(len(cast_votes_id)):
-            query = "SELECT * FROM votes_info WHERE vote_id='" + str(cast_votes_id[i][0]) + "'"
-            cast_votes[i] = db_func.execute_sql_select(query)[0]
-        initiated_votes_num = len(initiated_votes)
-        cast_votes_num = len(cast_votes)
-        print cast_votes_num
-        print cast_votes
-        return render_template('home.html', **locals())
-    else:
-        warning = "You are not logged in!"
-        return render_template('notification.html', ** locals())
+    user_id = str(current_user.user_id)
+    query = "SELECT * FROM votes_info WHERE creator_id='" + user_id + "'"
+    initiated_votes = db_func.execute_sql_select(query)
+    query = "SELECT vote_id FROM qualified_voters WHERE voter_id='" + user_id + "'"
+    cast_votes_id = db_func.execute_sql_select(query)
+    print cast_votes_id
+    cast_votes = {}
+    for i in range(len(cast_votes_id)):
+        query = "SELECT * FROM votes_info WHERE vote_id='" + str(cast_votes_id[i][0]) + "'"
+        cast_votes[i] = db_func.execute_sql_select(query)[0]
+    initiated_votes_num = len(initiated_votes)
+    cast_votes_num = len(cast_votes)
+    print cast_votes_num
+    print cast_votes
+    return render_template('home.html', **locals())
+    
 
 @app.route("/cast_a_vote/<vote_id>")
 def cast_a_vote(vote_id):
@@ -470,37 +481,52 @@ def create_vote():
 
     return render_template('setup_complete.html', **locals())
 
-def authenticated_only(f):
-    @functools.wraps(f)
-    def wrapped(*args, **kwargs):
-        if not current_user.is_authenticated:
-            print "not authed"
-            print current_user.user_id
-            return redirect("/")
-        else:
-            return f(*args, **kwargs)
-    return wrapped
+
 
 @app.route("/crypto_elections")
-@app.route("/crypto_elections/<type_of_election>/<election_id>")
+@app.route("/crypto_elections/<election_id>")
 @authenticated_only
-def crypto_election(election_id):
+def crypto_election(election_id = None):
     if not election_id:
         # bad link
         return redirect("/")
 
     else:
         # they have logged
-        query = "SELECT vote_id FROM user_info WHERE voter_id=" + current_user.user_id
+        query = "SELECT vote_id FROM qualified_voters WHERE voter_id=" + str(current_user.user_id)
         results = db_func.execute_sql_select(query)
         
-        if election_id not in results:
+        if (int(election_id),) not in results:
+            print "user not authed for election"
+            print results
+            print election_id
             return redirect("/")
 
         else:
             current_user.authed_elections[election_id] = True
 
-            return render_template("crypto_" + election_type, **locals()) # TODO: ????
+            results = db_func.check_vote_method(election_id)
+
+            print "RESULTS", results
+
+            vote_id = results[0]
+            vote_name = results[1]
+            expire_time = results[3]
+            vote_method = results[4]
+            # Check whether vote has expired
+            current_time = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S")
+            if datetime.datetime.strftime(expire_time, "%Y-%m-%d %H:%M:%S") < current_time:
+                warning = "Sorry, the vote has already ended."
+                return render_template('notification.html', **locals())
+
+            print "VOTE_ID", vote_id
+  
+
+            candidate_rows = db_func.get_candidate_list(str(vote_id))
+            candidate_num = len(candidate_rows)
+            candidate_list = [row[2] for row in sorted(candidate_rows)]
+            
+            return render_template("crypto_" + "single", **locals()) # TODO: "single" to the vote_method. not working now becuase vote_method is an int, need to ask Yang/Jacky
 
 #### WEBSOCKET FUNCTIONS ####
 socketio = SocketIO(app)

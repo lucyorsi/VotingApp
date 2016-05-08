@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<html>
+	<head>
+
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Another Vote</title>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    
+    <link rel="stylesheet" href="..{{ url_for('static', filename='css/hover.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="..{{ url_for('static', filename='css/font.css') }}">
+    <link rel="stylesheet" href="..{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="..{{ url_for('static', filename='css/setup_complete.css') }}">
+    <link rel="stylesheet" href="..{{ url_for('static', filename='css/vote.css') }}">
+
+	</head>
+<body>
+
+	<div class="container">
+
+    <div class="row navi">
+        <div class="col-md-3 col-sm-3 col-xs-3">
+            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal" href="/" >Another Vote</a></h3>
+        </div>
+        <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
+            {% if session['user_id'] %}
+                <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
+                <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <hr style="width=100%;">
+    </div>
+
+    <div class="row">
+
+		<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading">{{vote_name}}</h1>
+
+		<div class="col-md-12 col-sm-12 col-xs-12">
+			<br>
+			<p class="my_p_1" >Please cast your vote by clicking on the candidate's name.</p>
+			<br>
+		</div>
+
+		<form enctype="multipart/form-data" action="/receive_a_vote" method="POST">
+		<table class="col-md-12 col-sm-12 col-xs-12 table my_table">
+			<select style="display:none;">
+			<tr>
+				<th class="table_heading">Candidates</th>
+				<input style="display:none;" name="vote_name" value="{{vote_name}}">
+				<input style="display:none;" type="number" name="vote_id" value="{{vote_id}}">
+				<input style="display:none;" type="number" name="vote_method" value="{{vote_method}}">
+				<input style="display:none;" type="number" name="candidate_num" value="{{candidate_num}}">
+			</tr>
+			{% for i in range(candidate_num) %}
+                <tr>
+                    <td class="table_elem_1" ><button type="submit" class="input_1 hvr-grow" name="input_candidate" value="{{i}}" >{{candidate_list[i]}}</button></td>
+                </tr>
+            {% endfor %}
+		</table>
+		</form>
+
+		<div class="col-md-12 col-sm-12 col-xs-12">
+			<a class= "btn-big btn-return-1 hvr-grow" href="/"> Return to homepage </a>
+		</div>
+
+	</div>
+
+    </div>
+    <script 
+src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.6/socket.io.js"></script>        
+</body>
+</html>

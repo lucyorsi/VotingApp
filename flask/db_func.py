@@ -119,6 +119,12 @@ def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secu
 		for index in range(len(voter_id_list)):
 			cursor.execute("INSERT INTO qualified_voters (vote_id, voter_id, already_vote) VALUES(%s, %s, 0)", (vote_id, voter_id_list[index]))
 			conn.commit()
+
+        if (secure_level == 3):
+                for index in range(len(voter_id_list)):
+                        cursor.execute("INSERT INTO qualified_voters (vote_id, voter_id, voter_order) VALUES (%s, %s, %s)", (vote_id, voter_id_list[index], str(index)))
+                        conn.commit()
+
 	cursor.close()
 
 	return vote_id
@@ -238,3 +244,27 @@ def execute_sql_insert_user_info(username, password, email, user_key):
 	row_id = cursor.lastrowid
 	cursor.close()
 	return error, row_id
+
+def get_qualified_voters(vote_id):
+        cursor = conn.cursor()
+        cursor.execute("SELECT voter_id, voter_order FROM qualified_voters WHERE vote_id=%s", (vote_id))
+        conn.commit()
+
+        results = cursor.fetchall()
+
+        num_voters = cursor.rowcount
+
+        table = [0 for i in range(num_voters)]
+
+        for voter in results:
+                cursor.execute("SELECT user_key FROM user_info WHERE user_id=%s", (str(voter[0])))
+                conn.commit()
+
+                user_key = cursor.fetchone()
+
+                table[voter[1]] = user_key
+
+        if 0 in table:
+                print "Warning: bad qualified voters table"
+
+        return table

@@ -60,12 +60,6 @@
 
             <form enctype="multipart/form-data" action="/create_vote" method="POST">
 
-                {% if secure_level is equalto 1 %}
-                    <input type="number" style="display:none;" name="secure_level" value="1">
-                {% else %}
-                    <input type="number" style="display:none;" name="secure_level" value="2">
-                {% endif %}
-
                 <label class="my_label"> Vote Name: </label>
                 <input type="text" class="form-control" style="display:inline;width:300px;" name="vote_name" placeholder="Vote Name">
                 <br><br>
@@ -80,10 +74,20 @@
                     <option value="2">Ranking</option>
                     <option value="3">Weight</option>
                     <option value="4">Majority</option>
-                    <!-- <option value="random">Random</option>
-                    <option value="weighted_random">Weighted Random</option> -->
                 </select>
                 <br><br>
+
+                {% if session['user_id'] %}
+                    <label class="my_label"> Choose secure level:   </label>
+                    <select class="form-control" style="display:inline;width:300px;" name="secure_level">
+                        <option value="1">Without Login</option>
+                        <option value="2">Login</option>
+                        <option value="3">Login and Encrypt</option>
+                    </select>
+                <br><br>
+                {% else %}
+                    <input type="number" style="display:none;" name="secure_level" value="1">
+                {% endif %}
 
                 <label class="my_label"> Candidates List Upload: </label><!-- 
                 <input type="radio" id="radio1" name="candidate_upload_type" value="online" checked>
@@ -119,7 +123,7 @@
                     <input id="uploadBtn2" class="choose_button" type="file" name="voter_upload_file" accept=".txt, .xls, .xlsx">
                 </div>
                 <br> -->
-                <textarea class="form-control" style="display:inline;width:80%; margin-top:10px; height:32px;" name="voter_upload_text" onkeyup="adjust_textarea(this)"></textarea>
+                <textarea class="form-control" style="display:inline;width:80%; margin-top:10px; height:32px;" name="voter_upload_text" onkeyup="adjust_textarea(this)" placeholder="If you choose 'Without Login', you can ignore this part."></textarea>
                 <br><br>
                 {% endif %}
 

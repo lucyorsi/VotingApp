@@ -72,12 +72,7 @@ def main():
 
 @app.route("/setup")
 def setup():
-    if 'user_id' in session:
-        secure_level = 2
-        return render_template('setup.html', **locals())
-    else:
-        secure_level = 1
-        return render_template('setup.html', **locals())
+    return render_template('setup.html', **locals())
 
 @app.route("/input_id", methods=["POST"])
 def input_id():
@@ -275,8 +270,9 @@ def receive_a_vote():
         for i in range(candidate_num):
             db_func.cast_majority_vote(vote_id, candidate_list[i, 1], candidate_list[i, 2])
 
-    query = "UPDATE qualified_voters SET already_vote=1 WHERE voter_id='" + str(session['user_name']) + "' AND vote_id='" + str(vote_id) + "'" 
-    db_func.execute_sql_insert(query)
+    if ('user_id' in session):
+	    query = "UPDATE qualified_voters SET already_vote=1 WHERE voter_id='" + str(session['user_id']) + "' AND vote_id='" + str(vote_id) + "'" 
+	    db_func.execute_sql_insert(query)
     return render_template('thanks.html', **locals())
 
 @app.route("/view_result/<vote_id>")
@@ -451,6 +447,7 @@ def create_vote():
     expire_time = time.strftime("%Y-%m-%d %H:%M:%S", input_time)
 
     if 'user_id' in session:
+        secure_level = request.form['secure_level']
         voter_upload_text = request.form['voter_upload_text']
         voter_upload_text = voter_upload_text.split('\r\n')
         voter_id_list = {}
@@ -463,7 +460,7 @@ def create_vote():
                 warning = "Sorry you have input unexisted user email."
                 return render_template('notification.html', **locals())
 
-        vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, 2, voter_id_list, session['user_id'])
+        vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secure_level, voter_id_list, session['user_id'])
         
     else:
         voter_upload_text = ""

@@ -11,7 +11,7 @@ import socket
 from binascii import hexlify
 import flask.ext.login as flask_login
 from flask_login import current_user, login_user
-from flask_socketio import join_room  #disconnect
+from flask_socketio import join_room, leave_room, rooms  #disconnect
 
 app = Flask(__name__)
 
@@ -523,7 +523,7 @@ def crypto_election(election_id = None):
             candidate_num = len(candidate_rows)
             candidate_list = [row[2] for row in sorted(candidate_rows)]
             
-            return render_template("crypto_" + "single", **locals()) # TODO: "single" to the vote_method. not working now becuase vote_method is an int, need to ask Yang/Jacky
+            return render_template("crypto_" + "single" + ".html", **locals()) # TODO: "single" to the vote_method. not working now becuase vote_method is an int, need to ask Yang/Jacky
 
 #### WEBSOCKET FUNCTIONS ####
 socketio = SocketIO(app)
@@ -536,22 +536,104 @@ def connect():
 @socketio.on("join_election")
 @authenticated_only
 def join_election(election_id):
-    if current_user.authed_elections[election_id]:
+    election_id = str(election_id)
+    print "USER AUTHED ELECTIONS", current_user.authed_elections
+    if election_id in current_user.authed_elections and current_user.authed_elections[election_id]:
         join_room(election_id)
-        unique_id_table = get_unique_id_table(election_id)
-        send("unique_id_table", unique_id_table)
+        unique_id_table = db_func.get_qualified_voters(election_id)
+        emit("unique_id_table", unique_id_table)
 
     else:
-        send("auth_failed")
+        emit("auth_failed")
+
+
+public_key_shares = {}
 
 @socketio.on("public_key_share")
 @authenticated_only
-def public_key_share(key_share):
-    rooms = rooms()
-    print rooms
+def public_key_share(election_id, key_share):
+    election_id = str(election_id)
+    key_share = str(key_share)
+
+    print "PUBLIC KEY SHARE"
+    print election_id
+    print key_share
+
+    if election_id in current_user.authed_elections and current_user.authed_elections[election_id]:
+        emit("public_key_share", {"unique_id": current_user.unique_id, "key_share": key_share}, room = election_id)
+
+        # insert share into DB
+        public_key_shares[current_user.unique_id] = key_share
+
+    else:
+        emit("auth_failed")
+
+def authed_for_election(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if not (str(*args[0]) in current_user.authed_elections and current_user.authed_elections[str(*args[0])]):
+            print "not authed"
+            emit("auth_failed")
+        else:
+            return f(*args, **kwargs)
+    return wrapped
+
+@socketio.on("request_public_key_share")
+@authenticated_only
+@authed_for_election
+def request_public_key_share(election_id, unique_id):
+    election_id = str(election_id)
+    unique_id = str(unique_id)
+    
+    print public_key_shares
+    print unique_id
+
+    if unique_id in public_key_shares:
+        emit("public_key_share", {"unique_id": unique_id, "key_share": public_key_shares[unique_id]})
+
+    else:
+        emit("unrecognized_unique_id")
+
+proofs = {}
+@socketio.on("send_proof")
+@authenticated_only
+@authed_for_election
+def send_proof(election_id, proof_type, proof):
+    election_id = str(election_id)
+    proof_type = str(proof_type)
+    proof = str(proof)
+
+    # add proof to DB
+    proofs[(current_user.unique_id, proof_type)] = proof
+
+    emit("proof", {"proof_type": proof_type, "proof": proof}, room = election_id)
 
 
+@socketio.on("request_proof")
+@authenticated_only
+@authed_for_election
+def request_proof(election_id, proof_type, unique_id):
+    election_id = str(election_id)
+    unique_id = str(unique_id)
+    proof_type = str(proof_type)
 
+    if (unique_id, proof_type) in proofs:
+        emit("proof", {"proof_type": proof_type, "proof": proofs[(unique_id, proof_type)]})
+
+    else:
+        emit("unproved")
+
+final_talies = {}
+@socketio.on("final_tally")
+@authenticated_only
+@authed_for_election
+def final_tally(election_id, tally):
+    election_id = str(election_id)
+    tally = str(tally)
+
+    final_talies[current_user.unique_id] = tally
+
+    # if len(final_tallies) == n: check all the same
 
 if __name__ == "__main__":
     app.debug = True

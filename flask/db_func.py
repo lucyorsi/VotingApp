@@ -101,9 +101,11 @@ def create_database():
 	return
 
 def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secure_level, voter_id_list, creator_id):
+        print "SECURE_LEVEL", secure_level
+        print "TYPE", type(secure_level)
 	cursor = conn.cursor()
 
-	if(secure_level != 1):
+	if(secure_level == "2" or secure_level == "3"):
 		cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level, creator_id) VALUES (%s, %s, %s, %s, %s)", (vote_name, expire_time, vote_method, secure_level, creator_id))
 		conn.commit()
 	else:
@@ -115,12 +117,12 @@ def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secu
 		cursor.execute("INSERT INTO candidates_list (vote_id, candidate_name) VALUES(%s, %s)", (vote_id, candidate_upload_text[index]))
 		conn.commit()
 
-	if(secure_level != 1):
+	if(secure_level == "2"):
 		for index in range(len(voter_id_list)):
 			cursor.execute("INSERT INTO qualified_voters (vote_id, voter_id, already_vote) VALUES(%s, %s, 0)", (vote_id, voter_id_list[index]))
 			conn.commit()
 
-        if (secure_level == 3):
+        if (secure_level == "3"):
                 for index in range(len(voter_id_list)):
                         cursor.execute("INSERT INTO qualified_voters (vote_id, voter_id, voter_order) VALUES (%s, %s, %s)", (vote_id, voter_id_list[index], str(index)))
                         conn.commit()
@@ -257,12 +259,13 @@ def get_qualified_voters(vote_id):
         table = [0 for i in range(num_voters)]
 
         for voter in results:
+                print "QUALIFIED VOTER", voter
                 cursor.execute("SELECT user_key FROM user_info WHERE user_id=%s", (str(voter[0])))
                 conn.commit()
 
                 user_key = cursor.fetchone()
 
-                table[voter[1]] = user_key
+                table[int(voter[1])] = user_key[0]
 
         if 0 in table:
                 print "Warning: bad qualified voters table"

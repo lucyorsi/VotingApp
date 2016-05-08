@@ -51,12 +51,7 @@ def main():
 
 @app.route("/setup")
 def setup():
-    if 'user_id' in session:
-        secure_level = 2
-        return render_template('setup.html', **locals())
-    else:
-        secure_level = 1
-        return render_template('setup.html', **locals())
+    return render_template('setup.html', **locals())
 
 @app.route("/input_id", methods=["POST"])
 def input_id():
@@ -430,6 +425,7 @@ def create_vote():
     expire_time = time.strftime("%Y-%m-%d %H:%M:%S", input_time)
 
     if 'user_id' in session:
+        secure_level = request.form['secure_level']
         voter_upload_text = request.form['voter_upload_text']
         voter_upload_text = voter_upload_text.split('\r\n')
         voter_id_list = {}
@@ -442,7 +438,7 @@ def create_vote():
                 warning = "Sorry you have input unexisted user email."
                 return render_template('notification.html', **locals())
 
-        vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, 2, voter_id_list, session['user_id'])
+        vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secure_level, voter_id_list, session['user_id'])
         
     else:
         voter_upload_text = ""

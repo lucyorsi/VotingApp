@@ -103,7 +103,7 @@ def create_database():
 def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secure_level, voter_id_list, creator_id):
 	cursor = conn.cursor()
 
-	if(secure_level == 2):
+	if(secure_level != 1):
 		cursor.execute("INSERT INTO votes_info (vote_name, expire_time, vote_method, secure_level, creator_id) VALUES (%s, %s, %s, %s, %s)", (vote_name, expire_time, vote_method, secure_level, creator_id))
 		conn.commit()
 	else:
@@ -115,7 +115,7 @@ def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secu
 		cursor.execute("INSERT INTO candidates_list (vote_id, candidate_name) VALUES(%s, %s)", (vote_id, candidate_upload_text[index]))
 		conn.commit()
 
-	if(secure_level == 2):
+	if(secure_level != 1):
 		for index in range(len(voter_id_list)):
 			cursor.execute("INSERT INTO qualified_voters (vote_id, voter_id, already_vote) VALUES(%s, %s, 0)", (vote_id, voter_id_list[index]))
 			conn.commit()

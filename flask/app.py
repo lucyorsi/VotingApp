@@ -12,6 +12,7 @@ from binascii import hexlify
 import flask.ext.login as flask_login
 from flask_login import current_user, login_user
 from flask_socketio import join_room  #disconnect
+import json
 
 app = Flask(__name__)
 
@@ -273,6 +274,9 @@ def receive_a_vote():
     if ('user_id' in session):
 	    query = "UPDATE qualified_voters SET already_vote=1 WHERE voter_id='" + str(session['user_id']) + "' AND vote_id='" + str(vote_id) + "'" 
 	    db_func.execute_sql_insert(query)
+
+    calculate_result(vote_id )
+    
     return render_template('thanks.html', **locals())
 
 @app.route("/view_result/<vote_id>")
@@ -388,10 +392,9 @@ def view_result(vote_id):
             round_count = round_count + 1
             #Check if not update list, then, no winner
             if(whether_update == 0):
-                warning = "No candidate votes pass half"
+                winner = "No candidate votes pass half"
                 break
 
-        print "The final winner: " + str(winner)
         return render_template('results.html', **locals())
 
     elif vote_method == 3:
@@ -403,21 +406,157 @@ def view_result(vote_id):
         vote_method = "Majority"
         for i in range(candidate_num):
             result_table[i, 2] = db_func.count_candidate_total_yes(vote_id, result_table[i, 0])
-            print result_table[i, 2]
 
     # Method 1, 3, 4 will run this part
     most_vote = result_table[0, 2]
     for i in range(candidate_num):
         if (most_vote < result_table[i, 2]):
             most_vote = result_table[i, 2]
-    winner = {}
-    count_winner = 0
+    winner = ""
     for i in range(candidate_num):
         if (most_vote == result_table[i, 2]):
-            winner[count_winner] = result_table[i, 1]
-            count_winner = count_winner + 1
+            winner= winner + str(result_table[i, 1]) + "\n"
 
     return render_template('results.html', **locals())
+
+
+def calculate_result(vote_id):
+
+    results = db_func.check_vote_method(vote_id)
+    vote_name = results[1]
+    expire_time = results[3]
+    vote_method = results[4]
+    secure_level = results[5]
+
+    results = db_func.get_candidate_list(vote_id)
+
+    candidate_num = len(results)
+    result_table = {}
+
+    index = 0
+    for row in results:
+        result_table[index, 0] = row[0] #candidate id
+        result_table[index, 1] = row[2] #candidate name
+        index = index + 1
+
+    if vote_method == 1:
+        vote_method = "Single"
+        for i in range(candidate_num):
+            results = db_func.count_ballot(result_table[i, 0]) #candidate id
+            result_table[i, 2] = results 
+
+    elif vote_method == 2:
+        vote_method = "Ranking"
+        query = "SELECT * FROM ranking_list_info WHERE vote_id='" + str(vote_id) + "'"
+        results = db_func.execute_sql_select(query)
+        
+        list_table = {}
+        index = 0
+        for row in results:
+            list_table[index, 0] = row[0] #list id
+            index = index + 1
+        list_num = index
+
+        # Reconstruct all rank list
+        print "Print all list:"
+        for i in range(list_num):
+            query = "SELECT * FROM list_element WHERE list_id='" + str(list_table[i, 0]) + "' ORDER BY rank ASC"
+            results = db_func.execute_sql_select(query)
+            list_table[i, 1] = []
+            for row in results:
+                list_table[i, 1].append(row[2]) #candidate id
+            print list_table[i, 1]
+
+        round_count = 1
+        remove_list = {}
+        pass_half = 0
+        half_vote = list_num / 2
+        if (list_num % 2 != 0):
+            half_vote = half_vote + 1
+        while(pass_half == 0):
+            whether_update = 0
+            #Count vote 
+            remove_list[round_count, 0] = [] #store removed candidate id
+            remove_list[round_count, 1] = [] #store removed candidate name
+            for i in range(candidate_num):
+                result_table[i, 2] = 0
+            for i in range(list_num):
+                for j in range(candidate_num):
+                    if(list_table[i, 1][0] == result_table[j, 0]):
+                        result_table[j, 2] = result_table[j, 2] + 1
+            #Check each candidate how many first vote
+            least_vote = result_table[0, 2]
+            for i in range(candidate_num):
+                if(least_vote > result_table[i, 2]):
+                    least_vote = result_table[i, 2]
+            for i in range(candidate_num):
+                if(least_vote == result_table[i, 2]):
+                    remove_list[round_count, 0].append(result_table[i, 0])
+                    remove_list[round_count, 1].append(result_table[i, 1])
+            #Update list
+            for i in range(list_num):
+                for j in range(len(remove_list[round_count, 0])):
+                    if (remove_list[round_count, 0][j] == list_table[i, 1][0]):
+                        list_table[i, 1].pop(0)
+                        whether_update = 1
+                        break
+            #Print updated list
+            print "Update list:"
+            for i in range(list_num):
+                print list_table[i, 1]
+            #Check whether there are candidate pass half
+            winner = ""
+            for i in range(candidate_num):
+                if(result_table[i, 2] > half_vote):
+                    winner = str(result_table[i, 1])
+                    pass_half = 1
+            if(pass_half == 1):
+                break
+            round_count = round_count + 1
+            #Check if not update list, then, no winner
+            if(whether_update == 0):
+                winner = "No candidate votes pass half"
+                break
+        json_send = '{"result_table": ['
+        for i in range(candidate_num - 1):
+            json_send = json_send + '{"id":' + str(result_table[i, 0]) + ', "name": "' + str(result_table[i, 1]) +'", "vote_num": ' + str(result_table[i, 2]) +'}, '
+        json_send = json_send + '{"id":' + str(result_table[candidate_num - 1, 0]) + ', "name": "' + str(result_table[candidate_num - 1, 1]) +'", "vote_num": ' + str(result_table[candidate_num - 1, 2]) +'}'
+        json_send = json_send + "]}"
+        socketio.emit('update_chart', json_send, namespace="/test" + str(vote_id))
+        json_send = '{"winner": "' + winner.rstrip() + '"}'
+        socketio.emit('update_text', json_send, namespace="/test" + str(vote_id))
+        return
+
+    elif vote_method == 3:
+        vote_method = "Weight"
+        for i in range(candidate_num):
+            result_table[i, 2] = db_func.count_candidate_total_point(vote_id, result_table[i, 0])
+
+    elif vote_method == 4:
+        vote_method = "Majority"
+        for i in range(candidate_num):
+            result_table[i, 2] = db_func.count_candidate_total_yes(vote_id, result_table[i, 0])
+
+    # Method 1, 3, 4 will run this part
+    most_vote = result_table[0, 2]
+    for i in range(candidate_num):
+        if (most_vote < result_table[i, 2]):
+            most_vote = result_table[i, 2]
+    winner = ""
+    for i in range(candidate_num):
+        if (most_vote == result_table[i, 2]):
+            winner= winner + str(result_table[i, 1]) + "    "
+
+    json_send = '{"result_table": ['
+    for i in range(candidate_num - 1):
+        json_send = json_send + '{"id":' + str(result_table[i, 0]) + ', "name": "' + str(result_table[i, 1]) +'", "vote_num": ' + str(result_table[i, 2]) +'}, '
+    json_send = json_send + '{"id":' + str(result_table[candidate_num - 1, 0]) + ', "name": "' + str(result_table[candidate_num - 1, 1]) +'", "vote_num": ' + str(result_table[candidate_num - 1, 2]) +'}'
+    json_send = json_send + "]}"
+    socketio.emit('update_chart', json_send, namespace="/test" + str(vote_id))
+    json_send = '{"winner": "' + winner.rstrip() + '"}'
+    socketio.emit('update_text', json_send, namespace="/test" + str(vote_id))
+    return
+
 
 
 
@@ -446,8 +585,7 @@ def create_vote():
     input_time = time.strptime(expire_time, "%d/%m/%Y %H:%M")
     expire_time = time.strftime("%Y-%m-%d %H:%M:%S", input_time)
 
-    if 'user_id' in session:
-        secure_level = request.form['secure_level']
+    if secure_level != "1":
         voter_upload_text = request.form['voter_upload_text']
         voter_upload_text = voter_upload_text.split('\r\n')
         voter_id_list = {}
@@ -527,7 +665,6 @@ def crypto_election(election_id = None):
 
 #### WEBSOCKET FUNCTIONS ####
 socketio = SocketIO(app)
-
 
 @socketio.on("connect")
 def connect():

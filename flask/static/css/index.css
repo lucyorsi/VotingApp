@@ -46,7 +46,49 @@ a:hover{
     font-size: 115%;
     color: #484848;
 }
+.faq-title{
+    font-size: 400%;
+    font-weight: 300;
+    color: #2B616D;
+    width: 100%;
 
+}
+.faq-text{
+    float: left;
+    width: 100;
+    padding: 0px;
+    font-size: 115%; 
+    color:black;
+
+}
+.faq-link{
+     color: #2B616D;
+     font-size:120%;
+}
+.faq-procon{
+    color:#B2DBD5;
+    margin: 0px;
+}
+.faq-question{
+    color: #FA8D62
+
+  
+}
+.faq-table{
+    padding:20px;
+    color:#BAA896; 
+}
+.faq-table, th, td {
+    margin: auto;
+    text-align:center; 
+    font-size: 100%;
+}
+
+ol{
+    clear: left;
+    font-size: 115%;
+    font-style: italic;
+}
 .quick-start{
     margin-top: 50px;
     height: 200px;

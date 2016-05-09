@@ -22,6 +22,7 @@
             <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal" href="/" >Another Vote</a></h3>
         </div>
         <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
+                <a class="navi-element hvr-sink" href="#faq">FAQ</a>
             {% if session['user_id'] %}
                 <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
                 <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
@@ -35,14 +36,14 @@
     <div class="row">
         <hr style="width=100%;">
     </div>
-
     <div class="row">
         <div class="quick-start">
             <div class="col-md-6 col-sm-6">
                 <h1 class="start-now">Start Now</h1>
-                <h3 class="explanation-1">You don't need to login.</h3>
-                <h3 class="explanation-1">You can directly vote for someone</h3>
-                <h3 class="explanation-1">or initiate a new vote.</h3>
+                <h3 class="explanation-1">You don't need to login!</h3>
+                <h3 class="explanation-1">You can start a new vote</h3>
+                <h3 class="explanation-1">or vote in an existing open election.</h3>
+
             </div>
             <div class="col-md-6 col-sm-6">
                 <a class="btn-big btn-init hvr-grow" style="margin-top: 30px;" href="/setup">Initiate a vote</a>
@@ -55,7 +56,6 @@
     <div class="row">
         <hr style="width=100%;">
     </div>
-
     <div class="row">
 
         <div class="col-md-4 col-sm-4 function-intro">
@@ -66,7 +66,7 @@
             </div>
             <div class="system-explanation">
                 <h3 style="color: #2B616D;">Quick Start</h3>
-                <p >Without login. Initiate a new vote or vote for someone in the shortest time. The problem is that malicious voter may break it easily.</p>
+                <p>No login necessary! Start a new vote or vote in an existing open election. This method is perfect for quick votes where security is not an issue.</p>
             </div>
         </div>
 
@@ -78,7 +78,7 @@
             </div>
             <div class="system-explanation">
                 <h3 style="color: #2B616D;">Vote With Account</h3>
-                <p >You have to login to vote or initiate a new vote. It maybe slow but the account system can help you better management the vote initiated by you. The problem is that your vote will expose to our server.</p>
+                <p>Manage who is allowed to vote in your election. Any user who wants to vote in your election must first login and verify that they have permission to vote. </p>
             </div>
         </div>
 
@@ -90,7 +90,7 @@
             </div>
             <div class="system-explanation">
                 <h3 style="color: #2B616D;">Super Secure</h3>
-                <p >Using this, nobody can know your vote. Even our server don't know your vote. But it has some restriction.</p>
+                <p >This is our most secure option. No one, not even our server, knows who each person voted for. The results are computed and verified by each voter. We recommend using it only when security is a top concern and the number of voters is relatively small.</p>
             </div>
         </div>
 
@@ -99,7 +99,146 @@
     <div class="row">
         <hr style="width=100%;">
     </div>
+    <div class="row"> 
+        <div class="col-sm-12">
+        <h1 id="faq" class="faq-title">Frequently Asked Questions:</h1>
+        </div>
+    </div>
+    <div class="row">
+       <div class="col-sm-3">
+          <a class="hvr-sink faq-link" href="#singlevote">What is a single vote system?</a>
+       </div>
+       <div class="col-sm-3">
+          <a class="hvr-sink faq-link" href="#rankedvote">What is a ranked vote system?</a>
+     </div>
+       <div class="col-sm-3">
+          <a class="hvr-sink faq-link" href="#majorityvote">What is a majority vote system?</a>
+       </div> 
+       <div class="col-sm-3">
+          <a class="hvr-sink faq-link" href="#weightedvote">What is a weighted vote system?</a>
+       </div>
 
+<!--<a class="navi-element hvr-sink" href="#faq">FAQ</a>-->
+  
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <h2 id="singlevote" class="faq-question">What is a single vote system?</h2> 
+            <h4 class="faq-text"> The single vote method, also known as “First Past the Post,”  is the most straight-forward way to run a vote. Each voter gets one vote that they can assign to any of the candidates. These votes are then tallied and whichever candidate received the most votes wins.</h4>
+            <h3 class="faq-procon">Pros:</h3> 
+            <h4 class="faq-text">The best part of a single vote system is also its biggest problem: it's incredibly simple. This means voters are never confused about the role of their ballot. They are provided a clear-cut choice between candidates and the implications of voting for one candidate over another is relatively easy to understand. This is probably why single vote system tends to be the default system we employ in our daily lives. </h4>
+            <h4 class="faq-text">In addition to simplicity, the outcome of single vote systems tends to carry a “mandate” for the elected candidate to implement the platform they ran on. The complexity of other systems may lead to somewhat indecisive outcomes without a clear mandate behind them. </h4>
+            <h3 class="faq-procon">Cons:</h3>
+            <h4 class="faq-text">The simplicity of single vote systems may make them easy to use, but it also makes them pretty inept at dealing with even moderately complex voting situations. Consider an example in which three candidates representing the Republican, Democratic, and Libertarian parties are running for office. Using a FPTP ballot, the results of our hypothetical election are as follows:</h4>
+            <table class="faq-table" style="width:30%;"> 
+                <tr>
+                    <th>Candidate</th>
+                    <th>Votes Received</th>
+                </tr>
+                <tr>
+                    <td>Democrat</td>
+                    <td>45</td>
+                </tr>
+                <tr>
+                    <td>Republican</td>
+                    <td>40</td>
+                </tr>
+                <tr>
+                    <td>Libertarian</td>
+                    <td>15</td>
+            </table>
+            <h4 class="faq-text">The Democrat would win the election, despite the fact that the majority of people did not vote for them. While they did capture more votes than any other candidate, it is not necessarily true that they “represent” the electorate better than any of the other candidates. For instance, if the 15 people who voted for the Libertarian all prefer the Republican to the Democrat, then in fact, the Republican better represents this electorate.</br></br>The use of FPTP thus encourages binary ballots in which voters are essentially asked to pick between no more than two candidates. Even in cases where more than two options exist, voters realistically only pick between the top two candidates. Voting for lesser known candidates is commonly referred to as “throwing your vote away.” Furthermore, if two candidates with somewhat similar platforms run against a third candidate with a different platform, they may steal votes from each other, resulting in a win for the third candidate (e.g. in the situation above). This phenomenon is referred to as “splitting the vote” and discourages voters from supporting lesser known candidates, since it may inadvertently help candidates the voter dislikes most.</h4>
+            <h2 id="rankedvote" class="faq-question">What is a ranked vote system?</h2> 
+            <h4 class="faq-text">The ranked vote method, also known as “Single Transferable Vote,” allows voters to rank the candidates in order of their preference. On our website, voters can rank as many or as few candidates as they want. The algorithm for calculating the result is as follows:</h4>
+            <ol>
+                <li>Count each candidate's first place votes, if any candidate has more than 50 percent of the votes, they win the election. If not, continue to step 2.</li>
+                <li>Determine which candidate received the fewest first place votes</li>
+                <li>Remove that candidate from each voter's list, shifting lower ranking candidates up in rank.</li>
+                <li>Go to step 1</li>
+            </ol>
+            <h3 class="faq-procon">Pros:</h3>
+            <h4 class="faq-text">The biggest advantage of ranked voting is that it prevents votes from being wasted and eliminates the impact of candidates “splitting the vote.” Consider an example in which three candidates representing the right, center, and left of the political spectrum are running for office. In this hypothetical example, members of these political parties are assumed to fill out the same ballot. </h4>
+            <table class="faq-table" style="width:50%;"> 
+                <tr>
+                    <th>Party Affiliation</th>
+                    <th>Ranking</th>
+                    <th>Number of Voters</th>
+                </tr>
+                <tr>
+                    <td>Left</td>
+                    <td>Left, Center, Right</td>
+                    <td>45</td>
+                </tr>
+                <tr>
+                    <td>Center</td>
+                    <td>Center, Left, Right</td>
+                    <td>40</td>
+                </tr>
+                <tr>
+                    <td>Right</td>
+                    <td>Right, Center, Left</td>
+                    <td>15</td>
+            </table>
+            <h4 class="faq-text">If ranked voting were used to tabulate these results, the centrist candidate would win the election, despite receiving fewer first place votes than the left candidate. Such a system enables right-wing voters to cast their vote for their candidate, without fearing  it will result in a left-wing victory.</br></br>This system thus enables smaller parties to grow in popularity and prevents the dichotomy of a two party system. It also discourages negative campaigning, since  such actions will typically diminish a candidates chances of getting second and third choice votes. </h4>
+            <h3 class="faq-procon">Cons:</h3>
+            <h4 class="faq-text">The biggest argument against this system is that it is complex. Even if voters understand how to vote, they may not fully understand how their ballot will influence the election. This may lead to unexpected outcomes for voters.</br></br>In addition to potentially confusing voters, the system can tend to favor extreme candidates, who are likely to win a significant amount of first place votes, over centrist candidates who are likely to win a significant amount of second and third place votes. Consider the example below in which three candidates representing the left, the right and the center are running for office:</h4>  
+            <table class="faq-table" style="width:50%;"> 
+                <tr>
+                    <th>Party Affiliation</th>
+                    <th>Ranking</th>
+                    <th>Number of Voters</th>
+                </tr>
+                <tr>
+                    <td>Left</td>
+                    <td>Left, Center, Right</td>
+                    <td>45</td>
+                </tr>
+                <tr>
+                    <td>Center</td>
+                    <td>Center, Left, Right</td>
+                    <td>15</td>
+                </tr>
+                <tr>
+                    <td>Right</td>
+                    <td>Right, Center, Left</td>
+                    <td>40</td>
+            </table>
+            <h2 id="majorityvote" class="faq-question">What is a majority voting system?</h2>
+            <h4 class="faq-text">The majority, or “Approval,” method allows voters to vote for as many candidates as they want. In other words, voters give candidates they approve of a single vote and give candidates they disapprove of no votes. Whichever candidate receives the most votes wins.</h4>
+            <h3 class="faq-procon">Pros:</h3>
+            <h4 class="faq-text">This system is similar to ranked voting in that it prevents votes from being wasted (as in single vote systems) and eliminates the impact of candidates splitting the vote. Because voters can vote for as many candidates as they want, there is no risk that voting for one candidate inadvertently helps another. Like ranked voting, this system discourages negative campaigning since alienating another candidates voters could deprive a candidate of additional approval votes.</br></br>Unlike ranked voting, this system deters extremism since moderate candidates are more likely to receive approval votes from multiple subgroups of voters. Extreme candidates, on the other hand, are likely to alienate a large amount of voters and thus, will typically have fewer approval votes.</br></br>Finally, though this system is more complex than the single vote system, it is much more straightforward than ranked or weighted voting. Under this system, it is unlikely that voters will not understand the role of their ballot in determining the winner of the election.</h4>
+            <h3 class="faq-procon">Cons:</h3>
+            <h4 class="faq-text">Perhaps the biggest problem with approval voting is that it prefers moderate candidates even when a majority of the population does not. For instance, consider the vote tallies below in the case where there are 100 voters in the electorate:</h4>
+            <table class="faq-table" style="width:30%;"> 
+                <tr>
+                    <th>Candidate</th>
+                    <th>Votes Received</th>
+                </tr>
+                <tr>
+                    <td>Left</td>
+                    <td>60</td>
+                </tr>
+                <tr>
+                    <td>Center</td>
+                    <td>80</td>
+                </tr>
+                <tr>
+                    <td>Right</td>
+                    <td>20</td>
+            </table>
+            <h4 class="faq-text">In this case, a majority of the population voted and may have even preferred the left-wing candidate. Approval voting selects the candidate with the most approvals without regard to the nuance of voter preference. Under this system, “compromise candidates” will almost certainly always defeat other candidates, even if the majority of the population does not want to compromise.</br></br>In order to combat this result, voters may resort to offering only a single candidate an approval vote. Thus, approval voting can often succumb to many of the negatives associated with a single vote system.</h4>
+            <h2 id="weightedvote" class="faq-question">What is a weighted voting system?</h2>
+            <h4 class="faq-text">Weighted voting, also known as cumulative voting, gives each voter 100 votes that they can distribute among candidates. Whichever candidate receives the largest amount of votes wins.</h4>
+            <h3 class="faq-procon">Pros:</h3>
+            <h4 class="faq-text">Weighted voting allows minority groups to have a greater influence on the election since these voters can use all of their votes to support a single candidate. This benefit assumes that majority voters distribute their votes to more than one candidate.</h4>
+            <h3 class="faq-procon">Cons:</h3>
+            <h4 class="faq-text">Weighted voting can cause a lot of confusion among voters, since the impact of distributing votes is complex and not necessarily readily apparent. For this reason, this system lends itself to strategic voting, in which informed voters use the complexity of the system to manipulate results to their advantage.</br></br>For instance, the system can lead to “plumper votes” where a candidate is elected without support from a majority because his backers distributed 100 percent of their votes to him. Granted, this is the same reason why the system tends to help minority groups.</h4> 
+        </div> 
+    </div>
+    <div class="row">
+        <hr style="width=100%;">
+    </div>
+ 
 
 </div>
 

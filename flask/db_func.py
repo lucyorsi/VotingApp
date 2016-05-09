@@ -19,19 +19,19 @@ conn = mysql.connect()
 def create_database():
 
 	cursor = conn.cursor()
-	cursor.execute('''DROP TABLE IF EXISTS list_element;''')
+	cursor.execute('''DROP TABLE IF EXISTS list_element''')
 	conn.commit()
-	cursor.execute('''DROP TABLE IF EXISTS ranking_list_info;''')
+	cursor.execute('''DROP TABLE IF EXISTS ranking_list_info''')
 	conn.commit()
-	cursor.execute('''DROP TABLE IF EXISTS ballots_info;''')
+	cursor.execute('''DROP TABLE IF EXISTS ballots_info''')
 	conn.commit()
-	cursor.execute('''DROP TABLE IF EXISTS candidates_list;''')
+	cursor.execute('''DROP TABLE IF EXISTS candidates_list''')
 	conn.commit()
-	cursor.execute('''DROP TABLE IF EXISTS qualified_voters;''')
+	cursor.execute('''DROP TABLE IF EXISTS qualified_voters''')
 	conn.commit()
-	cursor.execute('''DROP TABLE IF EXISTS votes_info;''')
+	cursor.execute('''DROP TABLE IF EXISTS votes_info''')
 	conn.commit()
-	cursor.execute('''DROP TABLE IF EXISTS user_info;''')
+	cursor.execute('''DROP TABLE IF EXISTS user_info''')
 	conn.commit()
 
 	cursor.execute('''create table user_info (
@@ -40,7 +40,7 @@ def create_database():
 		password varchar(255) not null,
 		user_email varchar(255) not null unique,
 		user_key varchar(1024) not null
-	);''')
+	)''')
 	conn.commit()
 	cursor.execute('''create table votes_info (
 		vote_id integer primary key auto_increment,
@@ -50,7 +50,7 @@ def create_database():
 		vote_method integer not null,
 		secure_level integer not null,
 		foreign key (creator_id) references user_info(user_id)
-	);''')
+	)''')
 	conn.commit()
 	cursor.execute('''create table qualified_voters (
 		vote_id integer not null,
@@ -58,14 +58,14 @@ def create_database():
 		already_vote integer not null,
 		foreign key (vote_id) references votes_info(vote_id),
 		foreign key (voter_id) references user_info(user_id)
-	);''')
+	)''')
 	conn.commit()
 	cursor.execute('''create table candidates_list (
 		candidate_id integer primary key auto_increment,
 		vote_id integer not null ,
 		candidate_name varchar(255) not null,
 		foreign key (vote_id) references votes_info(vote_id)
-	);''')
+	)''')
 	conn.commit()
 	cursor.execute('''create table ballots_info (
 		ballot_id integer primary key auto_increment,
@@ -77,14 +77,14 @@ def create_database():
 		foreign key (candidate_id) references candidates_list(candidate_id),
 		foreign key (voter_id) references user_info(user_id),
 		foreign key (vote_id) references votes_info(vote_id)
-	);''')
+	)''')
 	conn.commit()
 	cursor.execute('''create table ranking_list_info (
 		list_id integer primary key auto_increment,
 		vote_id integer not null,
 		voter_id integer,
 		foreign key (vote_id) references votes_info(vote_id)
-	);''')
+	)''')
 	conn.commit()
 	cursor.execute('''create table list_element (
 		elem_id integer primary key auto_increment,
@@ -93,7 +93,7 @@ def create_database():
 		rank integer not null,
 		foreign key (list_id) references ranking_list_info(list_id),
 		foreign key (candidate_id) references candidates_list(candidate_id)
-	);''')
+	)''')
 	conn.commit()
 
 	cursor.close()

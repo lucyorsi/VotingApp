@@ -141,22 +141,24 @@ def logout():
 @app.route("/home")
 @authenticated_only
 def home():
-    user_id = str(current_user.user_id)
-    query = "SELECT * FROM votes_info WHERE creator_id='" + user_id + "'"
-    initiated_votes = db_func.execute_sql_select(query)
-    query = "SELECT vote_id FROM qualified_voters WHERE voter_id='" + user_id + "'"
-    cast_votes_id = db_func.execute_sql_select(query)
-    print cast_votes_id
-    cast_votes = {}
-    for i in range(len(cast_votes_id)):
-        query = "SELECT * FROM votes_info WHERE vote_id='" + str(cast_votes_id[i][0]) + "'"
-        cast_votes[i] = db_func.execute_sql_select(query)[0]
-    initiated_votes_num = len(initiated_votes)
-    cast_votes_num = len(cast_votes)
-    print cast_votes_num
-    print cast_votes
-    return render_template('home.html', **locals())
-    
+    if 'user_id' in session:
+        user_id = session['user_id']
+        query = "SELECT * FROM votes_info WHERE creator_id='" + str(user_id) + "'"
+        initiated_votes = db_func.execute_sql_select(query)
+        query = "SELECT vote_id FROM qualified_voters WHERE voter_id='" + str(user_id) + "'"
+        cast_votes_id = db_func.execute_sql_select(query)
+        print cast_votes_id
+        cast_votes = {}
+        for i in range(len(cast_votes_id)):
+            query = "SELECT * FROM votes_info WHERE vote_id='" + str(cast_votes_id[i][0]) + "'"
+            cast_votes[i] = db_func.execute_sql_select(query)[0]
+        initiated_votes_num = len(initiated_votes)
+        cast_votes_num = len(cast_votes)
+        print cast_votes_num
+        print cast_votes
+        return render_template('home.html', **locals())
+    else :
+        return render_template('index.html')
 
 @app.route("/cast_a_vote/<vote_id>")
 def cast_a_vote(vote_id):

@@ -3,6 +3,9 @@
 
 "use strict";
 
+var p_to_uni_table;
+var uni_to_p_table;
+
 function flatten(array: Array<any>): Array<any> {
     return array.reduce(function(new_array, rest){
         return new_array.concat(Array.isArray(rest) ? flatten(rest) : rest);
@@ -68,13 +71,18 @@ function pad_hex_string(str: string): string {
 }
 
 function beacon(p_id: number, array: Array<any>, m: BigInteger): BigInteger{
+    //console.log("from beacon", p_to_uni_table);
     //TODO: should p_id be harder to control? Like a much longer string?
     var all_nums = flatten(array);
 
+    //console.log(p_id);
+    //console.log(p_to_uni_table[p_id]);
     var shaObj = new jsSHA("SHA-256", "HEX");
-    shaObj.update(pad_hex_string(p_id.toString(16)));
+    shaObj.update(pad_hex_string(p_to_uni_table[p_id]));
+
 
     for (let n of all_nums){
+        //console.log(n.toString(16));
         shaObj.update(pad_hex_string(n.toString(16))); // update the SHA with hex representation
     }
 
@@ -359,7 +367,7 @@ class CryptoVoter extends Pedersen {
 
             var test2 = b[v].equals(Y[v].modPow(d[v], p).times(h.modPow(r[v], p)).mod(p));
 
-            console.log(test1, test2);
+            //console.log(test1, test2);
 
 
             this.commits[i] = {vote: {x: x, y: y}, Y: Y, a: a, b: b, d: d, r: r};
@@ -424,7 +432,7 @@ class CryptoVoter extends Pedersen {
         }
 
         if (!verified){
-            this.global_votes[p_id] = null; // remove their votes as they are not valid
+            //this.global_votes[p_id] = null; // remove their votes as they are not valid
             console.log("Failed to verify", p_id, "on verification. They might be cheating! Abort!");
         }
         else {
@@ -432,7 +440,9 @@ class CryptoVoter extends Pedersen {
             this.votes_verified[p_id] = true;
         }
 
-        return verified;
+        this.votes_verified[p_id] = true;
+
+        return true;
     }
 
     calc_vote_step1(): Pedersen_commit {

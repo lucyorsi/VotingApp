@@ -533,6 +533,12 @@ socketio = SocketIO(app)
 def connect():
     print "socketio connection"
 
+@socketio.on("get_self_unique_id")
+@authenticated_only
+def get_self_unique_id():
+    print "sending unique id"
+    emit("unique_id", current_user.unique_id)
+
 @socketio.on("join_election")
 @authenticated_only
 def join_election(election_id):
@@ -541,7 +547,9 @@ def join_election(election_id):
     if election_id in current_user.authed_elections and current_user.authed_elections[election_id]:
         join_room(election_id)
         unique_id_table = db_func.get_qualified_voters(election_id)
-        emit("unique_id_table", unique_id_table)
+        candidate_rows = db_func.get_candidate_list(election_id)
+        candidate_num = len(candidate_rows)
+        emit("unique_id_table", {"table": unique_id_table, "candidates": candidate_num})
 
     else:
         emit("auth_failed")
@@ -594,6 +602,18 @@ def request_public_key_share(election_id, unique_id):
     else:
         emit("unrecognized_unique_id")
 
+@socketio.on("get_all_public_key_shares")
+@authenticated_only
+@authed_for_election
+def get_all_public_key_shares(election_id):
+    print "get all PKS" 
+    election_id = str(election_id)
+
+    for unique_id, key_share in public_key_shares.iteritems():
+        emit("public_key_share", {"unique_id": unique_id, "key_share": key_share});
+        pass
+
+
 proofs = {}
 @socketio.on("send_proof")
 @authenticated_only
@@ -606,7 +626,7 @@ def send_proof(election_id, proof_type, proof):
     # add proof to DB
     proofs[(current_user.unique_id, proof_type)] = proof
 
-    emit("proof", {"proof_type": proof_type, "proof": proof}, room = election_id)
+    emit("proof", {"unique_id": current_user.unique_id, "proof_type": proof_type, "proof": proof}, room = election_id)
 
 
 @socketio.on("request_proof")
@@ -618,10 +638,27 @@ def request_proof(election_id, proof_type, unique_id):
     proof_type = str(proof_type)
 
     if (unique_id, proof_type) in proofs:
-        emit("proof", {"proof_type": proof_type, "proof": proofs[(unique_id, proof_type)]})
+        emit("proof", {"unique_id": current_user.unique_id, "proof_type": proof_type, "proof": proofs[(unique_id, proof_type)]})
 
     else:
         emit("unproved")
+
+
+@socketio.on("test")
+def test():
+    print "TEST HERE"
+
+@socketio.on("get_all_proofs")
+@authenticated_only
+@authed_for_election
+def get_all_proofs(election_id):
+    print "get all proofs"
+    election_id = str(election_id)
+
+    print proofs
+
+    for (unique_id, proof_type), proof in proofs.iteritems():
+        emit("proof", {"unique_id": unique_id, "proof_type": proof_type, "proof": proof})
 
 final_talies = {}
 @socketio.on("final_tally")

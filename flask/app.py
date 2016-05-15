@@ -19,6 +19,7 @@ app = Flask(__name__)
 app.secret_key = "igroup-4140proj"
 
 port_number = 5000
+host_ip_address = "192.168.10.108"
 
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
@@ -74,6 +75,18 @@ def main():
 @app.route("/setup")
 def setup():
     return render_template('setup.html', **locals())
+
+@app.route("/test_register")
+def test_register():
+    return render_template('register.html', **locals())
+
+@app.route("/test_login")
+def test_login():
+    return render_template('login.html', **locals())
+
+@app.route("/test_input_vote_id")
+def test_input_vote_id():
+    return render_template('input_vote_id.html', **locals())
 
 @app.route("/input_id", methods=["POST"])
 def input_id():
@@ -607,12 +620,12 @@ def create_vote():
         creator_id = ""
         vote_id = db_func.create_vote(vote_name, expire_time, vote_method, candidate_upload_text, 1, voter_upload_text, creator_id)
 
-    url_creator = socket.gethostbyname(socket.gethostname())
+    url_creator = host_ip_address
 
     temp = ":" + str(port_number) + "/view_result/" + str(vote_id)
     url_creator = url_creator + temp
 
-    url_voter = socket.gethostbyname(socket.gethostname())
+    url_voter = host_ip_address
     temp = ":" + str(port_number) + "/cast_a_vote/" + str(vote_id)
     url_voter = url_voter + temp
 

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<html>
+    <head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Another Vote</title>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href=".{{ url_for('static', filename='css/font.css') }}">
+    <link rel="stylesheet" href=".{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href=".{{ url_for('static', filename='css/setup_complete.css') }}">
+    <link href=".{{ url_for('static', filename='css/hover.css') }}" rel="stylesheet" media="all">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    </head>
+<body>
+
+    <div class="container">
+
+    <div class="row navi">
+        <div class="col-md-3 col-sm-3 col-xs-3">
+            <h3 class="navi-proj-name"><a class=" hvr-wobble-horizontal" href="/">Another Vote</a></h3>
+        </div>
+        <div class="col-md-9 col-sm-9 col-xs-9 navi-element-group">
+            {% if session['user_id'] %}
+                <h5 ><a class="navi-element hvr-sink" href="/logout">Logout</a></h5>
+                <h5 ><a class="navi-element hvr-sink" href="/home">{{session['user_name']}}</a></h5>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <hr style="width=100%;">
+    </div>
+
+    <div class="row" >
+
+    <div class="col-md-12 col-sm-12 col-xs-12 ">
+        <h1 class="my_heading" >Input Vote ID</h1>
+        <br>
+    </div>
+
+    <!-- <div class="col-md-12 col-sm-12 col-xs-12 ">
+        <p class="my_p_1" > We have helped you set up your vote.</p>
+        <br>
+    </div> -->
+
+    <div class="col-md-12 col-sm-12 col-xs-12 form-group">
+    <div style="width:60%;margin-left: 20%">
+        <form enctype="multipart/form-data" action="/input_id" method="POST" id="update-info-form" role="form">
+            <div class="form-group">
+              <input type="text" class="form-control" name="input_id" placeholder="Enter ID" >
+            </div>
+            <button type="submit" class="btn-big btn-view hvr-grow"><span class="glyphicon glyphicon-ok"></span> Submit</button>
+        </form>
+
+    </div>
+
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <a class= "btn-big btn-return hvr-grow " href="/"> Return to homepage </a>
+    </div>
+
+    </div>
+
+</body>
+</html>

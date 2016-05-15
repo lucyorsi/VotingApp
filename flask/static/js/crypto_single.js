@@ -82,28 +82,22 @@ function pedersen_array_to_bigint(array) {
     });
 }
 
-var p = bigInt("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF", 16);
-
-p = bigInt(283);
-
-var g = bigInt(60);
-var generators = [bigInt(60), bigInt(204), bigInt(71), bigInt(16), bigInt(32)] //TODO
-
-console.log("bigint -> hex test", bigint_array_to_hex([generators]));
-console.log(generators.toString(16));
-
-//var p_to_uni_table; these should actually be in vote.js because of the
-//var uni_to_p_table; beacon function
+var p_to_uni_table;
+var uni_to_p_table;
 var n;
 var self_voter_id;
 var candidates;
 
 var self_unique_id = localStorage.getItem("unique_id"); 
 
+var worker = new Worker("../static/js/crypto_single_WW.js");
+
 var socket = io.connect();
 console.log("connected to websocket");
 
 var election_id = "8"; //TODO
+
+socket.emit("get_self_unique_id");
 
 socket.on("unique_id", function(id){
     console.log("received unique id");
@@ -144,37 +138,98 @@ var me;
 
 function begin_vote(){
     console.log("begin vote");
+
+    // these too ifs check to make sure we have our own id
+    // and we have already received everything from the server
+    // necessary for the vote
     if (!self_unique_id){
         console.log("still don't have self_unique_id");
         socket.emit("get_self_unique_id");
         return;
     }
 
+    if (!p_to_uni_table){
+        console.log("still haven't received uni id table");
+        return;
+    }
+
+
+
     self_voter_id = uni_to_p_table[self_unique_id];
 
-    me = new CryptoVoter(p, g, n, self_voter_id, [candidates], generators);
+    // if the voter has already generated secret and public key shares,
+    // these values will exist in localStorage
+    var secret_key = localStorage.getItem("secret_key" + election_id);
+    var public_key_share = localStorage.getItem("public_key_share" + election_id);
 
-    //socket.emit("request_public_key_shares", election_id);
+    var randoms = new Uint32Array(16384); // this magic number is the maximum
+                                          // number of ints we can pull from 
+                                          // crypto.random without exceeding
+                                          // the number of bytes of entropy
+                                          // available
 
-    socket.emit("public_key_share", election_id, me.public_key_share.toString(16));
+    if (secret_key && public_key_share){
+        worker.postMessage({"cmd": "init_from_old", "n": n, "self_voter_id": self_voter_id,
+                            "candidates": [candidates], "p_to_uni_table": p_to_uni_table,
+                            "secret_key": secret_key, "public_key_share": public_key_share,
+                            "randoms": randoms});
+    }
+    else {
+        worker.postMessage({"cmd": "init", "n": n, "self_voter_id": self_voter_id,
+                            "candidates": [candidates], "p_to_uni_table": p_to_uni_table,
+                            "randoms": randoms});
+    }
+
 
     //socket.emit("test", election_id);
     socket.emit("get_all_public_key_shares", election_id);
     console.log("tryna get all PKS");
 }
 
+worker.addEventListener("message", function(e) {
+    var data = e.data;
+    console.log("message from worker");
+    console.log(e.data);
+    switch(data.cmd){
+        case "post_init":
+            // store the generated keys in local storage, just in case they close the tab
+            // later on
+            localStorage.setItem("secret_key" + election_id, data.secret_key);
+            localStorage.setItem("public_key_share" + election_id, data.public_key_share);
+
+            socket.emit("public_key_share", election_id, data.public_key_share);
+            break;
+
+        case "send_proof":
+            socket.emit("send_proof", election_id, "valid_vote", JSON.stringify(data.proof));
+            break;
+
+        case "get_all_proofs":
+            socket.emit("get_all_proofs", election_id);
+            break;
+
+        case "final_tally":
+            display_final(data.tally);
+            socket.emit("final_tally", election_id, data.tally);
+
+
+
+    }
+});
+
+worker.addEventListener("error", function(e) {
+    console.log("error from worker");
+    console.log(e);
+});
+
 socket.on("public_key_share", function(data){
     console.log("received public key share");
-    if (me){
-        var p_id = uni_to_p_table[data.unique_id];
-        console.log("from", p_id);
-        var keyshare = bigInt(data.key_share, 16);
-        me.receive_public_key_share(p_id, keyshare);
-    }
 
-    if (!me.public_key){
-        me.make_public_key();
-    }
+    var p_id = uni_to_p_table[data.unique_id];
+    console.log("from", p_id);
+    worker.postMessage({"cmd": "public_key_share", "p_id": p_id,
+                        "keyshare": data.key_share});
+
 });
 
 var buttons = document.getElementsByClassName("input_1");
@@ -182,26 +237,9 @@ for (var i = 0; i < buttons.length; i += 1){
     buttons[i].addEventListener('click', function (e) {
         console.log("clicked!");
         e.preventDefault();
-        me.set_vote([parseInt(this.value)]);
-        encrypt_and_prove();
+        worker.postMessage({"cmd": "set_vote", "vote": [parseInt(this.value)]});
     });
 }
-
-function encrypt_and_prove(){
-    if (me.public_key){
-        var proof = me.encrypt_and_prove();
-
-        console.log("finished proof");
-
-        socket.emit("send_proof", election_id, "valid_vote", JSON.stringify(vote_commit_array_to_hex(proof)));
-
-        //console.log("JSON proof sent", JSON.stringify(vote_commit_array_to_hex(proof)));
-    }
-
-    socket.emit("get_all_proofs", election_id);
-}
-
-var pedersen_proved = false;
 
 socket.on("proof", function(data){
     console.log("received proof");
@@ -217,55 +255,17 @@ socket.on("proof", function(data){
     console.log(proof);
 
     if (proof_type == "valid_vote"){
-        me.verify_vote(p_id, vote_commit_array_to_bigint(proof));
-
-        try_step_1();
+        worker.postMessage({"cmd": "valid_vote", "p_id": p_id, "proof": proof});
     }
-    else if (proof_type == "pedersen" && pedersen_proved){
-        me.log_ZKP_verify(p_id, pedersen_to_bigint(proof));
-
-        console.log(me.h);
-
-        try_step_2();
+    else if (proof_type == "pedersen"){
+        worker.postMessage({"cmd": "pedersen", "p_id": p_id, "proof": proof});
     }
 });
 
-function try_step_1(){
-    var pedersen = me.calc_vote_step1();
 
-    if (pedersen){
-        // everyone has committed their vote proofs, and we have
-        // computed our pedersen commit
-        
-        pedersen_proved = true;
-        
-        console.log("sending pedersen_proof");
-        console.log(pedersen);
-        
-        socket.emit("send_proof", election_id, "pedersen", JSON.stringify(pedersen_to_hex(pedersen)));
-
-        //socket.emit("get_all_proofs", election_id);
-    }
-}
-
-var tally;
-function try_step_2(){
-    tally = me.calc_vote_step2();
-
-    if (tally){
-        // everyone has published pedersen and we have computed
-        // the final tally
-        console.log("final_vote", tally);
-        
-        socket.emit("final_tally", election_id, tally.toString(16));
-
-        display_final();
-    }
-}
-
-function display_final(){
+function display_final(tally){
     //TODO
-    console.log(tally);
+    console.log(bigIn(tally, 16).toString());
 }
 
 

@@ -6,8 +6,6 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var p_to_uni_table;
-var uni_to_p_table;
 function flatten(array) {
     return array.reduce(function (new_array, rest) {
         return new_array.concat(Array.isArray(rest) ? flatten(rest) : rest);
@@ -32,20 +30,37 @@ function rmod(n, m) {
 function hex_to_int(str) {
     return bigInt(str, 16);
 }
-function randint(r) {
-    /* Returns a random integer on [0, r) */
+/*function randint(r: BigInteger):BigInteger {
+    // Returns a random integer on [0, r)
+
     //TODO: efficiency may be really bad
-    var random32 = new Uint32Array(1); // this array will hold the window.crypto 
-    // generated random value
+
+    var random32 = new Uint32Array(1); // this array will hold the window.crypto
+                                       // generated random value
     var random = bigInt(0); // this is the value that will be returned
     var i = 0; // represents the "slot" of 32 we are at
-    while (bigInt(32).pow(i).lesser(r)) {
-        window.crypto.getRandomValues(random32); // gets one 32-bit random value
+
+    while (bigInt(32).pow(i).lesser(r)){ // make sure we generate more bits than in r
+        self.crypto.getRandomValues(random32); // gets one 32-bit random value
         // shift the random value over by 32*i and increment random by it
         random = random.add(bigInt(random32[0]).shiftLeft(32 * i));
         i++;
     }
+
     return random.mod(r);
+}*/
+function randint(r) {
+    // returns a random integer on [0, r)
+    // Note: this is super hacky, using strings and shit as large numbers
+    // BigInteger.js really needs to allow you to create one from an array
+    // *shrug*
+    var num_bytes = Math.ceil(r.toString(2).length / 8);
+    // yes, to find the number of bytes needed we convert it to a binary
+    // string... yikes
+    var randoms = new Uint32Array(num_bytes);
+    self.crypto.getRandomValues(randoms);
+    var random_string = "<" + randoms.join("><") + ">";
+    return bigInt(random_string, Math.pow(2, 32)).mod(r);
 }
 function mod_div(n, d, m) {
     var inverse = d.modPow(m.minus(2), m);
@@ -57,9 +72,9 @@ function pad_hex_string(str) {
     }
     return str;
 }
-function beacon(p_id, array, m) {
+function beacon(p_id, array, m, p_to_uni_table) {
     //console.log("from beacon", p_to_uni_table);
-    //TODO: should p_id be harder to control? Like a much longer string?
+    //TODO: this will just output 256 bits which is way too small
     var all_nums = flatten(array);
     //console.log(p_id);
     //console.log(p_to_uni_table[p_id]);
@@ -74,16 +89,23 @@ function beacon(p_id, array, m) {
     return bigInt(hash, 16).mod(m);
 }
 var Pedersen = (function () {
-    function Pedersen(p, g, n, party_id, num_votes) {
+    function Pedersen(p, g, n, party_id, num_votes, p_to_uni_table, secret) {
+        if (secret === void 0) { secret = null; }
         this.p = p;
         this.g = g;
         this.n = n;
         this.party_id = party_id;
         this.num_votes = num_votes;
+        this.p_to_uni_table = p_to_uni_table;
         this.q = p.prev().divide(2);
         this.pedersen_commits_verified = Array.apply(null, Array(n)).map(function () { return false; });
         this.global_decrypt_shares = new Array(n);
-        this.secret = randint(this.q);
+        if (secret === null) {
+            this.secret = randint(this.q);
+        }
+        else {
+            this.secret = secret;
+        }
         this.public_key_share = g.modPow(this.secret, p);
         //TODO: publish_public_key_share(party_id, self.public_key_share);
         this.public_key_shares = new Array(n);
@@ -103,6 +125,8 @@ var Pedersen = (function () {
             return this.public_key;
         }
         else {
+            console.log("number of shares receieved:", len);
+            console.log("n:", this.n);
             return null;
         }
     };
@@ -129,7 +153,7 @@ var Pedersen = (function () {
         var r = new Array(this.num_votes);
         for (var i = 0; i < this.num_votes; i += 1) {
             var com = [x, y[i], w[i], a[i], b[i]];
-            var c = beacon(this.party_id, com, q);
+            var c = beacon(this.party_id, com, q, this.p_to_uni_table);
             r[i] = w[i].add(alpha.times(c)).mod(q);
         }
         return { y: y, w: w, a: a, b: b, r: r };
@@ -145,7 +169,7 @@ var Pedersen = (function () {
         var verified = true;
         for (var i = 0; i < this.num_votes; i += 1) {
             var com = [x, y[i], w[i], a[i], b[i]];
-            var c = beacon(p_id, com, this.q);
+            var c = beacon(p_id, com, this.q, this.p_to_uni_table);
             var test1 = this.g.modPow(r[i], this.p).equals(a[i].times(x.modPow(c, this.p)).mod(this.p));
             var test2 = h[i].modPow(r[i], this.p).equals(b[i].times(y[i].modPow(c, this.p)).mod(this.p));
             if (!(test1 && test2)) {
@@ -195,13 +219,16 @@ function range_apply(r, f) {
 }
 var CryptoVoter = (function (_super) {
     __extends(CryptoVoter, _super);
-    function CryptoVoter(p, g, n, voter_id, options, generators) {
-        _super.call(this, p, g, n, voter_id, options.length);
+    function CryptoVoter(p, g, n, voter_id, options, generators, p_to_uni_table, secret) {
+        if (secret === void 0) { secret = null; }
+        _super.call(this, p, g, n, voter_id, options.length, p_to_uni_table, secret);
         this.voter_id = voter_id;
         this.options = options;
         this.generators = generators;
+        this.p_to_uni_table = p_to_uni_table;
+        console.log("options", options);
         this.votes_verified = Array.apply(null, Array(n)).map(function () { return false; });
-        this.votes_verified[voter_id] = true; // obviously we trust ourselves
+        //this.votes_verified[voter_id] = true; // obviously we trust ourselves
         this.global_votes = new Array(n);
         this.generator_inverses = generators.map(function (G) { return G.modPow(p.subtract(2), p); });
     }
@@ -211,6 +238,7 @@ var CryptoVoter = (function (_super) {
     };
     CryptoVoter.prototype.encrypt_and_prove = function () {
         this.encrypted_vote = new Array(this.num_votes);
+        console.log("this.num_votes", this.num_votes);
         var h = this.public_key;
         this.commits = new Array(this.num_votes);
         var p = this.p;
@@ -236,11 +264,11 @@ var CryptoVoter = (function (_super) {
             //var w = u.times(d[v]).add(r[v]).mod(q);
             var a = range_apply(this.options[i], function (j) { return x.modPow(d[j], p).times(g.modPow(r[j], p)).mod(p); });
             var b = range_apply(this.options[i], function (j) { return Y[j].modPow(d[j], p).times(h.modPow(r[j], p)).mod(p); });
-            var c = beacon(this.voter_id, [x, y, Y, a, b], q);
+            var c = beacon(this.voter_id, [x, y, Y, a, b], q, this.p_to_uni_table);
             var prev_d = bigInt(d[v]);
             var prev_r = bigInt(r[v]);
-            var d_sum = rmod(d.reduce(function (d1, d2) { return d1.add(d2).mod(q); }, bigInt.zero).subtract(d[v]), q);
-            d[v] = rmod(c.subtract(d_sum), q);
+            var d_sum = d.reduce(function (d1, d2) { return d1.add(d2).mod(q); }, bigInt.zero);
+            d[v] = rmod(c.subtract(d_sum).add(prev_d), q);
             //r[v] = w.subtract(u.times(d[v])).mod(q);
             //console.log("(alpha, prev_d, new_d, prev_r, q)");
             //console.log(alpha.toString(), prev_d.toString(), d[v].toString(), prev_r.toString(), q.toString());
@@ -252,6 +280,10 @@ var CryptoVoter = (function (_super) {
             //console.log(test1, test2);
             this.commits[i] = { vote: { x: x, y: y }, Y: Y, a: a, b: b, d: d, r: r };
         }
+        this.votes_verified[this.voter_id] = true; //obviously we trust ourselves
+        //also want to make sure this is
+        //set only after having actually
+        //encrypted our own vote
         return this.commits;
     };
     CryptoVoter.prototype.verify_vote = function (p_id, commits) {
@@ -263,7 +295,7 @@ var CryptoVoter = (function (_super) {
         for (var i = 0; i < this.num_votes; i += 1) {
             var commit = commits[i];
             var c = beacon(p_id, [commit.vote.x, commit.vote.y, commit.Y,
-                commit.a, commit.b], q);
+                commit.a, commit.b], q, this.p_to_uni_table);
             if (!c.equals(commit.d.reduce(function (d1, d2) {
                 return d1.add(d2).mod(q);
             }, bigInt.zero))) {
@@ -297,14 +329,14 @@ var CryptoVoter = (function (_super) {
             }
         }
         if (!verified) {
-            //this.global_votes[p_id] = null; // remove their votes as they are not valid
+            this.global_votes[p_id] = null; // remove their votes as they are not valid
             console.log("Failed to verify", p_id, "on verification. They might be cheating! Abort!");
         }
         else {
             console.log(p_id, "passed verification.");
             this.votes_verified[p_id] = true;
         }
-        this.votes_verified[p_id] = true;
+        //this.votes_verified[p_id] = true;
         return true;
     };
     CryptoVoter.prototype.calc_vote_step1 = function () {
@@ -312,6 +344,7 @@ var CryptoVoter = (function (_super) {
         var all_verified = this.votes_verified.reduce(function (a, b) {
             return a && b;
         });
+        console.log("in calc_vote_step1, this.votes_verified", this.votes_verified);
         if (!all_verified) {
             console.log("Cannot continue with decryption, not all voters verified.");
             return null;
@@ -319,6 +352,7 @@ var CryptoVoter = (function (_super) {
         else {
             this.global_votes[this.voter_id] = this.encrypted_vote;
             var ws = new Array(this.num_votes);
+            console.log("global_votes", this.global_votes);
             for (var i = 0; i < this.num_votes; i += 1) {
                 var vote_array = this.global_votes.map(function (voter) { return voter[i]; });
                 var w = vote_array.reduce(function (a, b) {
@@ -347,6 +381,7 @@ function test_vote(num_voters, options) {
     if (num_voters === void 0) { num_voters = 4; }
     if (options === void 0) { options = [4]; }
     var p = bigInt("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF", 16);
+    p = bigInt(107);
     var q = p.prev().divide(2);
     var g = bigInt(2);
     var generators = [bigInt(2), bigInt(4), bigInt(8), bigInt(16)];
@@ -358,8 +393,12 @@ function test_vote(num_voters, options) {
     //var votes = [[0], [3]];
     var voters = [];
     var vote_proofs = [];
+    var p_to_uni_table = new Array(num_voters);
     for (var i = 0; i < num_voters; i += 1) {
-        voters.push(new CryptoVoter(p, g, num_voters, i, options, generators));
+        p_to_uni_table[i] = Math.random().toString(16).substring(2).toUpperCase();
+    }
+    for (var i = 0; i < num_voters; i += 1) {
+        voters.push(new CryptoVoter(p, g, num_voters, i, options, generators, p_to_uni_table));
         voters[voters.length - 1].set_vote(votes[i]);
     }
     for (var i = 0; i < num_voters; i += 1) {

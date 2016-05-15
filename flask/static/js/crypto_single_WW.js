@@ -158,7 +158,7 @@ self.addEventListener("message", function(e) {
 
                 console.log("encrypted and finished proof");
 
-                self.postMessage({"cmd": "send_proof", 
+                self.postMessage({"cmd": "send_vote_proof", 
                                   "proof": vote_commit_array_to_hex(proof)});
 
             }
@@ -173,7 +173,7 @@ self.addEventListener("message", function(e) {
             break;
 
         case "pedersen":
-            me.log_ZKP_verify(data.p_id, pedersen_array_to_bigint(data.proof));
+            me.log_ZKP_verify(data.p_id, pedersen_to_bigint(data.proof));
             try_step_2();
             break;
     }
@@ -211,9 +211,7 @@ function try_step_1(){
         console.log("sending pedersen_proof");
         console.log(pedersen);
         
-        socket.emit("send_proof", election_id, "pedersen", JSON.stringify(pedersen_to_hex(pedersen)));
-
-        //socket.emit("get_all_proofs", election_id);
+        self.postMessage({"cmd": "send_pedersen", "proof": pedersen_to_hex(pedersen)});
     }
 }
 
@@ -227,21 +225,6 @@ function try_step_2(){
         console.log("final_vote", tally);
 
         self.postMessage({"cmd": "final_tally", "tally": tally.toString(16)});
-        
-        socket.emit("final_tally", election_id, tally.toString(16));
-
-        display_final();
     }
 }
-
-function display_final(){
-    //TODO
-    console.log(tally);
-}
-
-
-
-    
-
-    
 

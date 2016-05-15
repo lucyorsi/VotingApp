@@ -106,6 +106,21 @@ function beacon(p_id: number, array: Array<any>, m: BigInteger, p_to_uni_table: 
     return bigInt(hash, 16).mod(m);
 }
 
+/*function beacon(p_id: number, array: Array<any>, m: BigInteger, p_to_uni_table: Array<string>): BigInteger{
+    var all_nums = flatten(array);
+
+    var shaObj = new jsSHA("SHA-256", "HEX");
+
+    var hex_string = p_to_uni_table[p_id];
+
+    for (let n of all_nums){
+        hex_string += n.toString(16);
+    }
+
+    hex_string = pad_hex_string(hex_string);*/
+
+
+
 interface Pedersen_commit{
     y: Array<BigInteger>;
     w: Array<BigInteger>;
@@ -393,9 +408,9 @@ class CryptoVoter extends Pedersen {
             //console.log("new_r =", new_r.toString());
             r[v] = new_r;
 
-            var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
+            //var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
 
-            var test2 = b[v].equals(Y[v].modPow(d[v], p).times(h.modPow(r[v], p)).mod(p));
+            //var test2 = b[v].equals(Y[v].modPow(d[v], p).times(h.modPow(r[v], p)).mod(p));
 
             //console.log(test1, test2);
 

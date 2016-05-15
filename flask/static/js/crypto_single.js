@@ -200,8 +200,12 @@ worker.addEventListener("message", function(e) {
             socket.emit("public_key_share", election_id, data.public_key_share);
             break;
 
-        case "send_proof":
+        case "send_vote_proof":
             socket.emit("send_proof", election_id, "valid_vote", JSON.stringify(data.proof));
+            break;
+
+        case "send_pedersen":
+            socket.emit("send_proof", election_id, "pedersen", JSON.stringify(data.proof));
             break;
 
         case "get_all_proofs":
@@ -265,7 +269,7 @@ socket.on("proof", function(data){
 
 function display_final(tally){
     //TODO
-    console.log(bigIn(tally, 16).toString());
+    console.log(bigInt(tally, 16).toString());
 }
 
 

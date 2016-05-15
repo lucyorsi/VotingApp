@@ -275,8 +275,8 @@ var CryptoVoter = (function (_super) {
             var new_r = rmod(alpha.times(prev_d.subtract(d[v])).add(prev_r), q);
             //console.log("new_r =", new_r.toString());
             r[v] = new_r;
-            var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
-            var test2 = b[v].equals(Y[v].modPow(d[v], p).times(h.modPow(r[v], p)).mod(p));
+            //var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
+            //var test2 = b[v].equals(Y[v].modPow(d[v], p).times(h.modPow(r[v], p)).mod(p));
             //console.log(test1, test2);
             this.commits[i] = { vote: { x: x, y: y }, Y: Y, a: a, b: b, d: d, r: r };
         }

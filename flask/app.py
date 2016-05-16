@@ -13,13 +13,22 @@ import flask.ext.login as flask_login
 from flask_login import current_user, login_user
 from flask_socketio import join_room  #disconnect
 import json
+import socket
 
 app = Flask(__name__)
 
 app.secret_key = "igroup-4140proj"
 
+# This gets the host_ip_address locally. *Note this won't work with multiple IP's
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8",80))
+host_ip_address = s.getsockname()[0]
+s.close()
+
 port_number = 5000
-host_ip_address = "192.168.10.108"
+
+# Hardcode the ip_address
+# host_ip_address = "192.168.10.108"
 
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)

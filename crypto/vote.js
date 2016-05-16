@@ -97,7 +97,8 @@ var Pedersen = (function () {
         this.party_id = party_id;
         this.num_votes = num_votes;
         this.p_to_uni_table = p_to_uni_table;
-        this.q = p.prev().divide(2);
+        this.double_q = p.prev();
+        this.q = this.double_q.divide(2);
         this.pedersen_commits_verified = Array.apply(null, Array(n)).map(function () { return false; });
         this.global_decrypt_shares = new Array(n);
         if (secret === null) {
@@ -138,6 +139,7 @@ var Pedersen = (function () {
         var alpha = this.secret;
         console.log(alpha.toString());
         var p = this.p;
+        var double_q = this.double_q;
         var q = this.q;
         var g = this.g;
         var w = Array.apply(null, Array(this.num_votes)).map(function () { return randint(q); });
@@ -153,8 +155,8 @@ var Pedersen = (function () {
         var r = new Array(this.num_votes);
         for (var i = 0; i < this.num_votes; i += 1) {
             var com = [x, y[i], w[i], a[i], b[i]];
-            var c = beacon(this.party_id, com, q, this.p_to_uni_table);
-            r[i] = w[i].add(alpha.times(c)).mod(q);
+            var c = beacon(this.party_id, com, double_q, this.p_to_uni_table);
+            r[i] = w[i].add(alpha.times(c)).mod(double_q);
         }
         return { y: y, w: w, a: a, b: b, r: r };
     };
@@ -169,7 +171,7 @@ var Pedersen = (function () {
         var verified = true;
         for (var i = 0; i < this.num_votes; i += 1) {
             var com = [x, y[i], w[i], a[i], b[i]];
-            var c = beacon(p_id, com, this.q, this.p_to_uni_table);
+            var c = beacon(p_id, com, this.double_q, this.p_to_uni_table);
             var test1 = this.g.modPow(r[i], this.p).equals(a[i].times(x.modPow(c, this.p)).mod(this.p));
             var test2 = h[i].modPow(r[i], this.p).equals(b[i].times(y[i].modPow(c, this.p)).mod(this.p));
             if (!(test1 && test2)) {
@@ -243,6 +245,7 @@ var CryptoVoter = (function (_super) {
         this.commits = new Array(this.num_votes);
         var p = this.p;
         var g = this.g;
+        var double_q = this.double_q;
         var q = this.q;
         var generator_inverses = this.generator_inverses;
         for (var i = 0; i < this.num_votes; i += 1) {
@@ -264,15 +267,15 @@ var CryptoVoter = (function (_super) {
             //var w = u.times(d[v]).add(r[v]).mod(q);
             var a = range_apply(this.options[i], function (j) { return x.modPow(d[j], p).times(g.modPow(r[j], p)).mod(p); });
             var b = range_apply(this.options[i], function (j) { return Y[j].modPow(d[j], p).times(h.modPow(r[j], p)).mod(p); });
-            var c = beacon(this.voter_id, [x, y, Y, a, b], q, this.p_to_uni_table);
+            var c = beacon(this.voter_id, [x, y, Y, a, b], double_q, this.p_to_uni_table);
             var prev_d = bigInt(d[v]);
             var prev_r = bigInt(r[v]);
-            var d_sum = d.reduce(function (d1, d2) { return d1.add(d2).mod(q); }, bigInt.zero);
-            d[v] = rmod(c.subtract(d_sum).add(prev_d), q);
+            var d_sum = d.reduce(function (d1, d2) { return d1.add(d2).mod(double_q); }, bigInt.zero);
+            d[v] = rmod(c.subtract(d_sum).add(prev_d), double_q);
             //r[v] = w.subtract(u.times(d[v])).mod(q);
             //console.log("(alpha, prev_d, new_d, prev_r, q)");
             //console.log(alpha.toString(), prev_d.toString(), d[v].toString(), prev_r.toString(), q.toString());
-            var new_r = rmod(alpha.times(prev_d.subtract(d[v])).add(prev_r), q);
+            var new_r = rmod(alpha.times(prev_d.subtract(d[v])).add(prev_r), double_q);
             //console.log("new_r =", new_r.toString());
             r[v] = new_r;
             //var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
@@ -289,20 +292,24 @@ var CryptoVoter = (function (_super) {
     CryptoVoter.prototype.verify_vote = function (p_id, commits) {
         var verified = true; //TODO: double check scope of this guy
         var p = this.p;
+        var double_q = this.double_q;
         var q = this.q;
         var g = this.g;
         var h = this.public_key;
         for (var i = 0; i < this.num_votes; i += 1) {
             var commit = commits[i];
             var c = beacon(p_id, [commit.vote.x, commit.vote.y, commit.Y,
-                commit.a, commit.b], q, this.p_to_uni_table);
+                commit.a, commit.b], double_q, this.p_to_uni_table);
             if (!c.equals(commit.d.reduce(function (d1, d2) {
-                return d1.add(d2).mod(q);
+                return d1.add(d2).mod(double_q);
             }, bigInt.zero))) {
                 verified = false;
             }
             console.log("test0:", verified);
             for (var j = 0; j < this.options[i]; j += 1) {
+                if (!verified) {
+                    break;
+                }
                 var test1 = commit.a[j].equals(commit.vote.x.modPow(commit.d[j], p).times(g.modPow(commit.r[j], p)).mod(p));
                 var test2 = commit.b[j].equals(commit.Y[j].modPow(commit.d[j], p).times(h.modPow(commit.r[j], p)).mod(p));
                 if (!(test1 && test2)) {
@@ -312,9 +319,6 @@ var CryptoVoter = (function (_super) {
                 }
                 else {
                     console.log("passed one for", p_id);
-                }
-                if (!verified) {
-                    break;
                 }
             }
             if (!verified) {
@@ -441,7 +445,7 @@ function test_vote(num_voters, options) {
         }
     }
     console.log("Election result:", test_out);
-    var expected_out = range_apply(num_votes, function (i) { return votes.map(function (v) { return v[i]; }).reduce(function (x, y) { return x * generators[y].toJSNumber(); }, 1); });
+    var expected_out = range_apply(num_votes, function (i) { return votes.map(function (v) { return v[i]; }).reduce(function (x, y) { return x.multiply(generators[y]).mod(p); }, bigInt.one); });
     console.log("Expected result:", expected_out);
     for (var i = 0; i < num_votes; i += 1) {
         console.assert(test_out[i].equals(expected_out[i]), "Bad out");

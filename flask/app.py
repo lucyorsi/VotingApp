@@ -484,11 +484,18 @@ def create_vote():
 
     url_creator = socket.gethostbyname(socket.gethostname())
 
-    temp = ":" + str(port_number) + "/view_result/" + str(vote_id)
+    print "SL", secure_level
+    print type(secure_level)
+
+    view_path = "/view_result/" if secure_level in ("1","2") else "/view_crypto_result/"
+    temp = ":" + str(port_number) + view_path + str(vote_id)
     url_creator = url_creator + temp
 
+    url_creator_path = view_path + str(vote_id)
+
+    cast_path = "/cast_a_vote/" if secure_level in ("1","2") else "/crypto_elections/"
     url_voter = socket.gethostbyname(socket.gethostname())
-    temp = ":" + str(port_number) + "/cast_a_vote/" + str(vote_id)
+    temp = ":" + str(port_number) + cast_path + str(vote_id)
     url_voter = url_voter + temp
 
     return render_template('setup_complete.html', **locals())

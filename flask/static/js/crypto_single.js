@@ -186,7 +186,14 @@ function begin_vote(){
     console.log("tryna get all PKS");
 }
 
+var final_decrypted = false;
 worker.addEventListener("message", function(e) {
+    if (final_decrypted){
+        // this is to ensure people can't just change their votes after
+        // having already decrypted the final tally
+        return;
+    }
+
     var data = e.data;
     console.log("message from worker");
     console.log(e.data);
@@ -202,10 +209,17 @@ worker.addEventListener("message", function(e) {
 
         case "send_vote_proof":
             socket.emit("send_proof", election_id, "valid_vote", JSON.stringify(data.proof));
+
+            display_status("Waiting for other vote proofs...", true);
+
+            display_ballot("submitted");
+            
             break;
 
         case "send_pedersen":
             socket.emit("send_proof", election_id, "pedersen", JSON.stringify(data.proof));
+
+            display_status("Final proof submitted, waiting for other proofs to begin decryption...", true);
             break;
 
         case "get_all_proofs":
@@ -213,11 +227,18 @@ worker.addEventListener("message", function(e) {
             break;
 
         case "final_tally":
-            display_final(data.tally);
+            final_decrypted = true;
+            display_final(bigInt(data.tally[0], 16).toString());
             socket.emit("final_tally", election_id, data.tally);
+            break;
 
+        case "status_update":
+            display_status(data.str, data.spinner);
+            break;
 
-
+        case "display_ballot":
+            display_ballot(data.show);
+            break;
     }
 });
 
@@ -267,14 +288,48 @@ socket.on("proof", function(data){
 });
 
 
-function display_final(tally){
-    //TODO
-    console.log(bigInt(tally, 16).toString());
+function display_status(str, show_spinner){
+    var show_spinner = show_spinner || false;
+    var output = "";
+    if (show_spinner && show_spinner !== "undefined"){
+        console.log("show_spinner", show_spinner);
+        output = '<h1 class="text-center"><i class="fa fa-circle-o-notch fa-spin fa-fw"></i></h1>';
+    }
+
+    output += '<h4 class=text-center>' + str + '</h4>';
+
+    document.getElementById("status").innerHTML = output;
+}
+
+function display_ballot(show, tally){
+    var ballot = document.getElementById("ballot");
+
+    if (show === "submitted"){
+        ballot.classList.remove("hidden");
+        ballot.innerHTML = '<div class="col-xs-12"><p class="my_p_1">Your vote has been submitted. Please keep the tab until all other voters have submitted their votes, and the final tally has been decrypted.</p></div>';
+    }
+    else if (show === "tally"){
+        ballot.classList.remove("hidden");
+        ballot.innerHTML = '<div class="col-xs-12"><p class="my_p_1">The final tally is: ' + tally + '</p></div>';
+    }
+    else if (show) {
+        ballot.classList.remove("hidden");
+    }
+    else {
+        ballot.classList.add("hidden");
+    }
 }
 
 
+function display_final(tally){
+    display_status("All proofs have been personally verified. The vote is now complete.");
+    display_ballot("tally", tally);
+}
 
-    
+(function(){
+    console.log("hello!");
+    display_ballot(false);
 
-    
+    display_status('Initializing...', true);
 
+})();

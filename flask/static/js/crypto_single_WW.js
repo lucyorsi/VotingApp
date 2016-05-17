@@ -124,6 +124,9 @@ self.addEventListener("message", function(e) {
             self.postMessage({"cmd": "post_init", 
                               "secret_key": me.secret.toString(16),
                               "public_key_share": me.public_key_share.toString(16)});
+
+            self.postMessage({"cmd": "status_update", "str": "Waiting for other users to send their public key shares", "spinner": true});
+
             break;
 
         case "init_from_old":
@@ -138,6 +141,8 @@ self.addEventListener("message", function(e) {
             me = new CryptoVoter(p, g, n, self_voter_id, candidates, generators,
                                  p_to_uni_table, secret_key, public_key_share);
 
+            self.postMessage({"cmd": "status_update", "str": "Waiting for other users to send their public key shares", "spinner": true});
+
             break;
 
         case "public_key_share":
@@ -145,7 +150,14 @@ self.addEventListener("message", function(e) {
             var p_id = parseInt(data.p_id);
             console.log(p_id, keyshare);
             me.receive_public_key_share(p_id, keyshare);
-            console.log("final public key", me.make_public_key());
+
+            if (me.make_public_key()){
+                console.log("final public key", me.public_key);
+                self.postMessage({"cmd": "status_update",
+                                  "str": "All public key shares have been received and the public key has been constructed"});
+                self.postMessage({"cmd": "display_ballot", "show": true});
+            }
+
             break;
 
         case "set_vote":
@@ -182,22 +194,6 @@ self.addEventListener("message", function(e) {
 });
 
 
-
-
-function encrypt_and_prove(){
-    if (me.public_key){
-        var proof = me.encrypt_and_prove();
-
-        console.log("finished proof");
-
-        socket.emit("send_proof", election_id, "valid_vote", JSON.stringify(vote_commit_array_to_hex(proof)));
-
-        //console.log("JSON proof sent", JSON.stringify(vote_commit_array_to_hex(proof)));
-    }
-
-    socket.emit("get_all_proofs", election_id);
-}
-
 var pedersen_proved = false;
 
 
@@ -207,6 +203,8 @@ function try_step_1(){
     if (pedersen){
         // everyone has committed their vote proofs, and we have
         // computed our pedersen commit
+        
+        self.postMessage({"cmd": "status_update", "str": "All voters have submitted their votes and each has been personally verified as valid. Beginning decryption...", "spinner": true});
         
         pedersen_proved = true;
         
@@ -226,7 +224,7 @@ function try_step_2(){
         // the final tally
         console.log("final_vote", tally);
 
-        self.postMessage({"cmd": "final_tally", "tally": tally.toString(16)});
+        self.postMessage({"cmd": "final_tally", "tally": bigint_array_to_hex(tally)});
     }
 }
 

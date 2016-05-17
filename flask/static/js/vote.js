@@ -290,6 +290,14 @@ var CryptoVoter = (function (_super) {
         return this.commits;
     };
     CryptoVoter.prototype.verify_vote = function (p_id, commits) {
+        if (this.votes_verified[p_id]) {
+            // We have already verified a vote from this person.
+            // We can thus safely return true. Note this also means
+            // that we will not accept any "new" votes by anyone.
+            // This could be changed in the future, but to stay on the 
+            // side of safety and ease, I'm leaving it.
+            return true;
+        }
         var verified = true; //TODO: double check scope of this guy
         var p = this.p;
         var double_q = this.double_q;
@@ -340,7 +348,6 @@ var CryptoVoter = (function (_super) {
             console.log(p_id, "passed verification.");
             this.votes_verified[p_id] = true;
         }
-        //this.votes_verified[p_id] = true;
         return true;
     };
     CryptoVoter.prototype.calc_vote_step1 = function () {

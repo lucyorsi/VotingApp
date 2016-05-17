@@ -1,92 +1,13 @@
 "use strict";
 
-function bigint_array_to_hex(array) {
-    return array.map(function (val) {
-        if (Array.isArray(val)) {
-            return bigint_array_to_hex(val);
-        }
-        else {
-            return val.toString(16);
-        }
-    });
-}
-
-function hex_array_to_bigint(array) {
-    return array.map(function (val) {
-        if (Array.isArray(val)) {
-            return hex_array_to_bigint(val);
-        }
-        else {
-            return bigInt(val, 16);
-        }
-    });
-}
-
-function vote_commit_to_hex(commit) {
-    return {vote: {x: commit.vote.x.toString(16), y: commit.vote.y.toString(16)},
-            Y: bigint_array_to_hex(commit.Y),
-            a: bigint_array_to_hex(commit.a),
-            b: bigint_array_to_hex(commit.b),
-            d: bigint_array_to_hex(commit.d),
-            r: bigint_array_to_hex(commit.r),};
-}
-
-function vote_commit_to_bigint(commit) {
-    return {vote: {x: bigInt(commit.vote.x, 16), y: bigInt(commit.vote.y, 16)},
-            Y: hex_array_to_bigint(commit.Y),
-            a: hex_array_to_bigint(commit.a),
-            b: hex_array_to_bigint(commit.b),
-            d: hex_array_to_bigint(commit.d),
-            r: hex_array_to_bigint(commit.r)};
-}
-
-function vote_commit_array_to_hex(array) {
-    return array.map(function (commit){
-        return vote_commit_to_hex(commit);
-    });
-}
-
-function vote_commit_array_to_bigint(array) {
-    return array.map(function (commit){
-        return vote_commit_to_bigint(commit);
-    });
-}
-
-function pedersen_to_hex(commit) {
-    return {
-        y: bigint_array_to_hex(commit.y),
-        w: bigint_array_to_hex(commit.w),
-        a: bigint_array_to_hex(commit.a),
-        b: bigint_array_to_hex(commit.b),
-        r: bigint_array_to_hex(commit.r)};
-}
-
-function pedersen_to_bigint(commit) {
-    return {
-        y: hex_array_to_bigint(commit.y),
-        w: hex_array_to_bigint(commit.w),
-        a: hex_array_to_bigint(commit.a),
-        b: hex_array_to_bigint(commit.b),
-        r: hex_array_to_bigint(commit.r)};
-}
-
-function pedersen_array_to_hex(array) {
-    return array.map(function (commit){
-        return pedersen_to_hex(commit);
-    });
-}
-
-function pedersen_array_to_bigint(array) {
-    return array.map(function (commit){
-        return pedersen_to_bigint(commit);
-    });
-}
+console.log("election_id", election_id);
 
 var p_to_uni_table;
 var uni_to_p_table;
 var n;
 var self_voter_id;
 var candidates;
+var candidate_table;
 
 var self_unique_id = localStorage.getItem("unique_id"); 
 
@@ -95,7 +16,7 @@ var worker = new Worker("../static/js/crypto_single_WW.js");
 var socket = io.connect();
 console.log("connected to websocket");
 
-var election_id = "8"; //TODO
+//var election_id = "8"; //TODO
 
 socket.emit("get_self_unique_id");
 
@@ -115,6 +36,7 @@ socket.on("unique_id_table", function(data){
     console.log(data);
     var table = data.table;
     candidates = data.candidates;
+    candidate_table = data.candidate_table;
 
     p_to_uni_table = table;
 
@@ -162,27 +84,33 @@ function begin_vote(){
     var secret_key = localStorage.getItem("secret_key" + election_id);
     var public_key_share = localStorage.getItem("public_key_share" + election_id);
 
-    var randoms = new Uint32Array(16384); // this magic number is the maximum
-                                          // number of ints we can pull from 
-                                          // crypto.random without exceeding
-                                          // the number of bytes of entropy
-                                          // available
+    // same for finished vote
+    var final_tally = localStorage.getItem("final_tally" + election_id);
+    // TODO var final_outcome = localStorage.getItem("final_outcome" + election_id);
 
-    if (secret_key && public_key_share){
+    if (final_tally){
+        // TODO if (final_outcome){
+        display_status("Final tally has been decrypted, calculating outcome...", true);
+        display_ballot("tally", final_tally);
+        calc_tally(parseInt(final_tally));
+    }
+
+    else if (secret_key && public_key_share){
         worker.postMessage({"cmd": "init_from_old", "n": n, "self_voter_id": self_voter_id,
                             "candidates": [candidates], "p_to_uni_table": p_to_uni_table,
-                            "secret_key": secret_key, "public_key_share": public_key_share,
-                            "randoms": randoms});
+                            "secret_key": secret_key, "public_key_share": public_key_share});
     }
+
     else {
         worker.postMessage({"cmd": "init", "n": n, "self_voter_id": self_voter_id,
-                            "candidates": [candidates], "p_to_uni_table": p_to_uni_table,
-                            "randoms": randoms});
+                            "candidates": [candidates], "p_to_uni_table": p_to_uni_table});
     }
 
 
     //socket.emit("test", election_id);
-    socket.emit("get_all_public_key_shares", election_id);
+    if (!final_tally){
+        socket.emit("get_all_public_key_shares", election_id);
+    }
     console.log("tryna get all PKS");
 }
 
@@ -228,7 +156,11 @@ worker.addEventListener("message", function(e) {
 
         case "final_tally":
             final_decrypted = true;
-            display_final(bigInt(data.tally[0], 16).toString());
+            var final_tally = bigInt(data.tally[0], 16);
+            // storing in localStorage shows we have already finished the vote
+            localStorage.setItem("final_tally" + election_id, final_tally.toString());
+            display_final(final_tally.toString());
+            calc_tally(final_tally.toJSNumber());
             socket.emit("final_tally", election_id, data.tally);
             break;
 
@@ -263,6 +195,9 @@ for (var i = 0; i < buttons.length; i += 1){
         console.log("clicked!");
         e.preventDefault();
         worker.postMessage({"cmd": "set_vote", "vote": [parseInt(this.value)]});
+
+        display_status("Your vote is being encrypted...", true);
+        display_ballot(false);
     });
 }
 
@@ -310,7 +245,7 @@ function display_ballot(show, tally){
     }
     else if (show === "tally"){
         ballot.classList.remove("hidden");
-        ballot.innerHTML = '<div class="col-xs-12"><p class="my_p_1">The final tally is: ' + tally + '</p></div>';
+        ballot.innerHTML = '<div class="col-xs-12"><p class="my_p_1">All proofs have been personally verified. The vote is now complete. The final tally is: ' + tally + '</p><div id="vote_outcome" class="text-center"></div></div>';
     }
     else if (show) {
         ballot.classList.remove("hidden");
@@ -322,14 +257,63 @@ function display_ballot(show, tally){
 
 
 function display_final(tally){
-    display_status("All proofs have been personally verified. The vote is now complete.");
+    display_status("Calculating outcome...", true);
     display_ballot("tally", tally);
+}
+
+function calc_tally(tally){
+    var vote_distribution = new Array(candidates);
+    var generators = generators || [2, 3, 5, 7, 11, 64, 128, 256, 512, 1024];
+    
+    var tally_tally = function(vote_distribution){
+        var prod = 1;
+        for (var i = 0; i < vote_distribution.length; i += 1){
+            prod *= Math.pow(generators[i], vote_distribution[i]);
+        }
+        return prod;
+    };
+
+    // c stands for candidate
+    var _calc_tally = function(sum, c){
+        if (c === candidates - 1){
+            // put the rest of the votes on the last candidate
+            vote_distribution[c] = n - sum; 
+            var prod = tally_tally(vote_distribution);
+            if (prod == tally){
+                // vote_distribution now holds the correct... vote distribution
+                return true;
+            }
+        }
+        else {
+            for (var i = 0; i < (n - sum + 1); i += 1){
+                vote_distribution[c] = i;
+                if (_calc_tally(sum + i, c + 1)) return true;
+            }
+        }
+
+        // we should only get here if we couldn't find a solution
+        // bad
+        return false;
+    };
+
+    var found = _calc_tally(0, 0);
+    if (found){
+        var html_str = "The final result is: <br />";
+        for (var i = 0; i < candidates; i += 1){
+            html_str += candidate_table[i] + ": " + vote_distribution[i] + "<br />";
+        }
+        document.getElementById("vote_outcome").innerHTML = html_str;
+    }
+    else {
+        document.getElementById("vote_outcome").innerHTML = "Final vote outcome could not be calculated. Either a mistake was made in calculation, you are out of sync with the server, someone cheated (very unlikely), or there is a bug in the code.";
+    }
+    display_status("", false);
 }
 
 (function(){
     console.log("hello!");
     display_ballot(false);
 
-    display_status('Initializing...', true);
+    display_status('Initializing, creating secret key...', true);
 
 })();

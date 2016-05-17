@@ -431,6 +431,17 @@ class CryptoVoter extends Pedersen {
     }
 
     verify_vote(p_id: number, commits: Array<Vote_commit>): boolean {
+
+        if (this.votes_verified[p_id]){
+            // We have already verified a vote from this person.
+            // We can thus safely return true. Note this also means
+            // that we will not accept any "new" votes by anyone.
+            // This could be changed in the future, but to stay on the 
+            // side of safety and ease, I'm leaving it.
+            
+            return true;
+        }
+
         var verified = true; //TODO: double check scope of this guy
 
         var p = this.p;
@@ -494,8 +505,6 @@ class CryptoVoter extends Pedersen {
             console.log(p_id, "passed verification.");
             this.votes_verified[p_id] = true;
         }
-
-        //this.votes_verified[p_id] = true;
 
         return true;
     }

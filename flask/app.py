@@ -37,8 +37,23 @@ def authenticated_only(f):
 @login_manager.user_loader
 def load_user(user_id):
     user_id = str(user_id)
+
+
     if user_id in users:
         return users[user_id]
+
+    # this check helps when the server is restarted so the users dict is emptied,
+    # but users still have valid sessions. thus we can log them back in
+    elif "user_id" in session:
+        user_data = db_func.get_user_by_id(user_id)
+        if user_data is not None:
+            # we can safely add the user back in
+            new_user = User(user_data["user_name"], user_id, user_data["unique_id"])
+            new_user.is_authenticated = True
+            login_user(new_user)
+            users[user_id] = new_user
+            return new_user
+
     else:
         print "could not load user"
         print users
@@ -145,7 +160,7 @@ def home():
     initiated_votes = db_func.execute_sql_select(query)
     query = "SELECT vote_id FROM qualified_voters WHERE voter_id='" + user_id + "'"
     cast_votes_id = db_func.execute_sql_select(query)
-    print cast_votes_id
+    print "cast_votes_id", cast_votes_id, user_id
     cast_votes = {}
     for i in range(len(cast_votes_id)):
         query = "SELECT * FROM votes_info WHERE vote_id='" + str(cast_votes_id[i][0]) + "'"
@@ -484,6 +499,7 @@ def create_vote():
 @app.route("/crypto_elections/<election_id>")
 @authenticated_only
 def crypto_election(election_id = None):
+    print "HELLOHELLO"
     if not election_id:
         # bad link
         return redirect("/")
@@ -500,7 +516,11 @@ def crypto_election(election_id = None):
             return redirect("/")
 
         else:
+            print "HIHIHIHIHI"
+            print election_id
+            print current_user.user_name
             current_user.authed_elections[election_id] = True
+            print current_user.authed_elections
 
             results = db_func.check_vote_method(election_id)
 
@@ -543,35 +563,16 @@ def get_self_unique_id():
 @authenticated_only
 def join_election(election_id):
     election_id = str(election_id)
+    print election_id
+    print "username", current_user.user_name
     print "USER AUTHED ELECTIONS", current_user.authed_elections
     if election_id in current_user.authed_elections and current_user.authed_elections[election_id]:
         join_room(election_id)
         unique_id_table = db_func.get_qualified_voters(election_id)
         candidate_rows = db_func.get_candidate_list(election_id)
         candidate_num = len(candidate_rows)
-        emit("unique_id_table", {"table": unique_id_table, "candidates": candidate_num})
-
-    else:
-        emit("auth_failed")
-
-
-public_key_shares = {}
-
-@socketio.on("public_key_share")
-@authenticated_only
-def public_key_share(election_id, key_share):
-    election_id = str(election_id)
-    key_share = str(key_share)
-
-    print "PUBLIC KEY SHARE"
-    print election_id
-    print key_share
-
-    if election_id in current_user.authed_elections and current_user.authed_elections[election_id]:
-        emit("public_key_share", {"unique_id": current_user.unique_id, "key_share": key_share}, room = election_id)
-
-        # insert share into DB
-        public_key_shares[current_user.unique_id] = key_share
+        candidate_table = [row[2] for row in candidate_rows]
+        emit("unique_id_table", {"table": unique_id_table, "candidates": candidate_num, "candidate_table": candidate_table})
 
     else:
         emit("auth_failed")
@@ -586,7 +587,25 @@ def authed_for_election(f):
             return f(*args, **kwargs)
     return wrapped
 
-@socketio.on("request_public_key_share")
+@socketio.on("public_key_share")
+@authenticated_only
+@authed_for_election
+def public_key_share(election_id, key_share):
+    election_id = str(election_id)
+    key_share = str(key_share)
+
+    # insert share into DB
+    #public_key_shares[current_user.unique_id] = key_share
+    inserted = db_func.insert_public_key_share(election_id, current_user.unique_id, key_share)
+    if inserted:
+        # they haven't submitted a PKS before, so it's all good
+        emit("public_key_share", {"unique_id": current_user.unique_id, "key_share": key_share}, room = election_id)
+    else:
+        # they've already submitted the public key, we haven't submitted it in the DB
+        emit("pk_already_submitted")
+
+
+"""@socketio.on("request_public_key_share")
 @authenticated_only
 @authed_for_election
 def request_public_key_share(election_id, unique_id):
@@ -601,6 +620,7 @@ def request_public_key_share(election_id, unique_id):
 
     else:
         emit("unrecognized_unique_id")
+"""
 
 @socketio.on("get_all_public_key_shares")
 @authenticated_only
@@ -609,9 +629,15 @@ def get_all_public_key_shares(election_id):
     print "get all PKS" 
     election_id = str(election_id)
 
-    for unique_id, key_share in public_key_shares.iteritems():
+    """for unique_id, key_share in public_key_shares.iteritems():
         emit("public_key_share", {"unique_id": unique_id, "key_share": key_share});
         pass
+        """
+
+    # get all PKSs from DB
+    all_shares = db_func.get_all_PKS(election_id)
+    for share in all_shares:
+        emit("public_key_share", share) # check here
 
 
 proofs = {}
@@ -624,12 +650,14 @@ def send_proof(election_id, proof_type, proof):
     proof = str(proof)
 
     # add proof to DB
-    proofs[(current_user.unique_id, proof_type)] = proof
+    #proofs[(current_user.unique_id, proof_type)] = proof
+
+    db_func.insert_proof(election_id, current_user.unique_id, proof_type, proof)
 
     emit("proof", {"unique_id": current_user.unique_id, "proof_type": proof_type, "proof": proof}, room = election_id)
 
 
-@socketio.on("request_proof")
+"""@socketio.on("request_proof")
 @authenticated_only
 @authed_for_election
 def request_proof(election_id, proof_type, unique_id):
@@ -642,11 +670,7 @@ def request_proof(election_id, proof_type, unique_id):
 
     else:
         emit("unproved")
-
-
-@socketio.on("test")
-def test():
-    print "TEST HERE"
+        """
 
 @socketio.on("get_all_proofs")
 @authenticated_only
@@ -655,10 +679,13 @@ def get_all_proofs(election_id):
     print "get all proofs"
     election_id = str(election_id)
 
-    print proofs
+    # get all proofs from DB
+    #for (unique_id, proof_type), proof in proofs.iteritems():
+    #    emit("proof", {"unique_id": unique_id, "proof_type": proof_type, "proof": proof})
 
-    for (unique_id, proof_type), proof in proofs.iteritems():
-        emit("proof", {"unique_id": unique_id, "proof_type": proof_type, "proof": proof})
+    all_proofs = db_func.get_all_proofs(election_id)
+    for proof in all_proofs:
+        emit("proof", proof) # check here
 
 final_talies = {}
 @socketio.on("final_tally")

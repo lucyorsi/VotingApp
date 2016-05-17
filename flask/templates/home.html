@@ -46,10 +46,12 @@
                     </div>
                     <div id="initiated-votes-list">
                         {% if initiated_votes_num != undefined and initiated_votes_num != 0 %}
-                            {% for i in range(initiated_votes_num - 1) %}
+                            {% for i in range(initiated_votes_num) %}
                                 <div class="vote-info my-font-2">
                                     <div>
-                                        <a class="hvr-sweep-to-right vote-info-title" href="/view_result/{{initiated_votes[i][0]}}">Name: {{initiated_votes[i][1]}}</a>
+                                        <a class="hvr-sweep-to-right vote-info-title" 
+                                           href="/{{'view_result' if initiated_votes[i][5] in (1,2) else 'view_crypto_result'}}/{{initiated_votes[i][0]}}">
+                                            Name: {{initiated_votes[i][1]}}</a>
                                     </div>
                                     <div>
                                         <p class="vote-info-elem">ID: {{initiated_votes[i][0]}}</p>
@@ -57,18 +59,10 @@
                                         <p class="vote-info-elem">Expire time: {{initiated_votes[i][3]}}</p>
                                     </div>
                                 </div>
+                                {% if i != cast_votes_num - 1 %}
                                 <hr style="width=90%; left:5%; margin:5px;">
+                                {% endif %}
                             {% endfor %}
-                            <div class="vote-info my-font-2">
-                                <div>
-                                    <a class="hvr-sweep-to-right vote-info-title" href="/view_result/{{initiated_votes[initiated_votes_num -1][0]}}">Name: {{initiated_votes[initiated_votes_num - 1][1]}}</a>
-                                </div>
-                                <div>
-                                    <p class="vote-info-elem">ID: {{initiated_votes[initiated_votes_num - 1][0]}}</p>
-                                    <p class="vote-info-elem">Method: {{initiated_votes[initiated_votes_num - 1][4]}}</p>
-                                    <p class="vote-info-elem">Expire time: {{initiated_votes[initiated_votes_num - 1][3]}}</p>
-                                </div>
-                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -86,10 +80,12 @@
                     </div>
                     <div id="initiated-votes-list">
                         {% if cast_votes_num != undefined and cast_votes_num != 0 %}
-                            {% for i in range(cast_votes_num - 1) %}
+                            {% for i in range(cast_votes_num) %}
                                 <div class="vote-info my-font-2">
                                     <div>
-                                        <a class="hvr-sweep-to-left vote-info-title-2" href="/cast_a_vote/{{cast_votes[i][0]}}">Name: {{cast_votes[i][1]}}</a>
+                                        <a class="hvr-sweep-to-left vote-info-title-2" 
+                                           href="/{{'cast_a_vote' if cast_votes[i][5] in (1,2) else 'crypto_elections'}}/{{cast_votes[i][0]}}">
+                                            Name: {{cast_votes[i][1]}}</a>
                                     </div>
                                     <div>
                                         <p class="vote-info-elem">ID: {{cast_votes[i][0]}}</p>
@@ -97,18 +93,10 @@
                                         <p class="vote-info-elem">Expire time: {{cast_votes[i][3]}}</p>
                                     </div>
                                 </div>
+                                {% if i != cast_votes_num - 1 %}
                                 <hr style="width=90%; left:5%; margin:5px;">
+                                {% endif %}
                             {% endfor %}
-                            <div class="vote-info my-font-2">
-                                <div>
-                                    <a class="hvr-sweep-to-left vote-info-title-2" href="/cast_a_vote/{{cast_votes[cast_votes_num -1][0]}}">Name: {{cast_votes[cast_votes_num - 1][1]}}</a>
-                                </div>
-                                <div>
-                                    <p class="vote-info-elem">ID: {{cast_votes[cast_votes_num - 1][0]}}</p>
-                                    <p class="vote-info-elem">Method: {{cast_votes[cast_votes_num - 1][4]}}</p>
-                                    <p class="vote-info-elem">Expire time: {{cast_votes[cast_votes_num - 1][3]}}</p>
-                                </div>
-                            </div>
                         {% endif %}
                     </div>
                 </div>

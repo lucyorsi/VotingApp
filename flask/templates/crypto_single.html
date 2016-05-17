@@ -79,7 +79,10 @@
 	</div>
 
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.6/socket.io.js"></script>        
+    <script>
+        var election_id = "{{election_id}}";
+    </script>
+    <script src="..{{ url_for('static', filename='js/socket.io.js') }}"></script>
     <script src="..{{ url_for('static', filename='js/BigInteger.js') }}"></script>
     <script src="..{{ url_for('static', filename='js/jssha256.js') }}"></script>
     <script src="..{{ url_for('static', filename='js/vote.js') }}"></script>

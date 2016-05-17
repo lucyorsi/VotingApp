@@ -263,7 +263,7 @@ function display_final(tally){
 
 function calc_tally(tally){
     var vote_distribution = new Array(candidates);
-    var generators = generators || [2, 3, 5, 7, 11, 64, 128, 256, 512, 1024];
+    var generators = generators || [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
     
     var tally_tally = function(vote_distribution){
         var prod = 1;

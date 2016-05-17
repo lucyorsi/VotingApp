@@ -39,11 +39,14 @@
 
     <div class="row">
         <hr style="width=100%;">
+		<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading">{{vote_name}}</h1>
     </div>
 
     <div class="row">
+        <div id="status"></div>
+    </div>
 
-		<h1 class="col-md-12 col-sm-12 col-xs-12 my_heading">{{vote_name}}</h1>
+    <div class="row hidden" id="ballot">
 
 		<div class="col-md-12 col-sm-12 col-xs-12">
 			<br>
@@ -76,7 +79,13 @@
 	</div>
 
     </div>
-    <script 
-src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.6/socket.io.js"></script>        
+    <script>
+        var election_id = "{{election_id}}";
+    </script>
+    <script src="..{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    <script src="..{{ url_for('static', filename='js/BigInteger.js') }}"></script>
+    <script src="..{{ url_for('static', filename='js/jssha256.js') }}"></script>
+    <script src="..{{ url_for('static', filename='js/vote.js') }}"></script>
+    <script src="..{{ url_for('static', filename='js/crypto_single.js') }}"></script>
 </body>
 </html>

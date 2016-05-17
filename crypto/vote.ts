@@ -35,8 +35,8 @@ function hex_to_int(str: string):BigInteger {
     return bigInt(str, 16);
 }
 
-function randint(r: BigInteger):BigInteger {
-    /* Returns a random integer on [0, r) */
+/*function randint(r: BigInteger):BigInteger {
+    // Returns a random integer on [0, r)
 
     //TODO: efficiency may be really bad
 
@@ -46,13 +46,31 @@ function randint(r: BigInteger):BigInteger {
     var i = 0; // represents the "slot" of 32 we are at
 
     while (bigInt(32).pow(i).lesser(r)){ // make sure we generate more bits than in r
-        window.crypto.getRandomValues(random32); // gets one 32-bit random value
+        self.crypto.getRandomValues(random32); // gets one 32-bit random value
         // shift the random value over by 32*i and increment random by it
         random = random.add(bigInt(random32[0]).shiftLeft(32 * i));
         i++;
     }
 
     return random.mod(r);
+}*/
+
+function randint(r: BigInteger): BigInteger {
+    // returns a random integer on [0, r)
+    // Note: this is super hacky, using strings and shit as large numbers
+    // BigInteger.js really needs to allow you to create one from an array
+    // *shrug*
+    
+    var num_bytes = Math.ceil(r.toString(2).length / 8);
+    // yes, to find the number of bytes needed we convert it to a binary
+    // string... yikes
+    
+    var randoms = new Uint32Array(num_bytes);
+    self.crypto.getRandomValues(randoms);
+
+    var random_string = "<" + randoms.join("><") + ">";
+
+    return bigInt(random_string, Math.pow(2, 32)).mod(r);
 }
 
 function mod_div(n: BigInteger, d: BigInteger, m: BigInteger):BigInteger {
@@ -67,14 +85,19 @@ function pad_hex_string(str: string): string {
     return str;
 }
 
-function beacon(p_id: number, array: Array<any>, m: BigInteger): BigInteger{
-    //TODO: should p_id be harder to control? Like a much longer string?
+function beacon(p_id: number, array: Array<any>, m: BigInteger, p_to_uni_table: Array<string>): BigInteger{
+    //console.log("from beacon", p_to_uni_table);
+    //TODO: this will just output 256 bits which is way too small
     var all_nums = flatten(array);
 
+    //console.log(p_id);
+    //console.log(p_to_uni_table[p_id]);
     var shaObj = new jsSHA("SHA-256", "HEX");
-    shaObj.update(pad_hex_string(p_id.toString(16)));
+    shaObj.update(pad_hex_string(p_to_uni_table[p_id]));
+
 
     for (let n of all_nums){
+        //console.log(n.toString(16));
         shaObj.update(pad_hex_string(n.toString(16))); // update the SHA with hex representation
     }
 
@@ -82,6 +105,21 @@ function beacon(p_id: number, array: Array<any>, m: BigInteger): BigInteger{
 
     return bigInt(hash, 16).mod(m);
 }
+
+/*function beacon(p_id: number, array: Array<any>, m: BigInteger, p_to_uni_table: Array<string>): BigInteger{
+    var all_nums = flatten(array);
+
+    var shaObj = new jsSHA("SHA-256", "HEX");
+
+    var hex_string = p_to_uni_table[p_id];
+
+    for (let n of all_nums){
+        hex_string += n.toString(16);
+    }
+
+    hex_string = pad_hex_string(hex_string);*/
+
+
 
 interface Pedersen_commit{
     y: Array<BigInteger>;
@@ -97,6 +135,7 @@ interface Ciphertext{
 }
 
 class Pedersen {
+    double_q: BigInteger;
     q: BigInteger;
     pedersen_commits_verified: Array<boolean>;
     global_decrypt_shares: Array<any>; //TODO: share type
@@ -110,14 +149,23 @@ class Pedersen {
     h_thing: Array<BigInteger>;
 
     constructor(public p: BigInteger, public g: BigInteger, public n: number, 
-                public party_id: number, public num_votes: number){
+                public party_id: number, public num_votes: number,
+                public p_to_uni_table: Array<string>,
+                secret: BigInteger = null){
 
-        this.q = p.prev().divide(2);
+        this.double_q = p.prev();
+        this.q = this.double_q.divide(2);
 
         this.pedersen_commits_verified = Array.apply(null, Array(n)).map(function(){return false});
         this.global_decrypt_shares = new Array(n);
 
-        this.secret = randint(this.q);
+        if (secret === null){
+            this.secret = randint(this.q);
+        }
+        else {
+            this.secret = secret;
+        }
+
         this.public_key_share = g.modPow(this.secret, p);
         //TODO: publish_public_key_share(party_id, self.public_key_share);
         
@@ -144,6 +192,8 @@ class Pedersen {
             return this.public_key;
         }
         else {
+            console.log("number of shares receieved:", len);
+            console.log("n:", this.n);
             return null;
         }
     }
@@ -157,6 +207,7 @@ class Pedersen {
         var alpha = this.secret;
         console.log(alpha.toString());
         var p = this.p;
+        var double_q = this.double_q;
         var q = this.q;
         var g = this.g;
         
@@ -175,9 +226,9 @@ class Pedersen {
         var r = new Array(this.num_votes);
         for (var i = 0; i < this.num_votes; i += 1){
             var com = [x, y[i], w[i], a[i], b[i]];
-            var c = beacon(this.party_id, com, q);
+            var c = beacon(this.party_id, com, double_q, this.p_to_uni_table);
 
-            r[i] = w[i].add(alpha.times(c)).mod(q);
+            r[i] = w[i].add(alpha.times(c)).mod(double_q);
         }
 
         return {y: y, w: w, a: a, b: b, r: r};
@@ -197,7 +248,7 @@ class Pedersen {
 
         for (var i = 0; i < this.num_votes; i += 1){
             var com = [x, y[i], w[i], a[i], b[i]];
-            var c = beacon(p_id, com, this.q);
+            var c = beacon(p_id, com, this.double_q, this.p_to_uni_table);
 
             var test1 = this.g.modPow(r[i], this.p).equals(
                 a[i].times(x.modPow(c, this.p)).mod(this.p));
@@ -279,12 +330,15 @@ class CryptoVoter extends Pedersen {
     out: Array<BigInteger>;
 
     constructor(p: BigInteger, g: BigInteger, n: number, public voter_id: number,
-                public options: Array<number>, public generators: Array<BigInteger>){
+                public options: Array<number>, public generators: Array<BigInteger>,
+                public p_to_uni_table: Array<string>, secret: BigInteger = null){
         
-        super(p, g, n, voter_id, options.length);
+        super(p, g, n, voter_id, options.length, p_to_uni_table, secret);
+
+        console.log("options", options);
 
         this.votes_verified = Array.apply(null, Array(n)).map(function(){ return false; });
-        this.votes_verified[voter_id] = true; // obviously we trust ourselves
+        //this.votes_verified[voter_id] = true; // obviously we trust ourselves
 
         this.global_votes = new Array(n);
 
@@ -300,12 +354,15 @@ class CryptoVoter extends Pedersen {
     encrypt_and_prove(): Array<Vote_commit> {
         this.encrypted_vote = new Array(this.num_votes);
 
+        console.log("this.num_votes", this.num_votes);
+
         var h = this.public_key;
 
         this.commits = new Array(this.num_votes);
 
         var p = this.p;
         var g = this.g;
+        var double_q = this.double_q;
         var q = this.q;
         var generator_inverses = this.generator_inverses;
 
@@ -339,39 +396,56 @@ class CryptoVoter extends Pedersen {
 
             var b = range_apply(this.options[i], (j) => Y[j].modPow(d[j], p).times(h.modPow(r[j], p)).mod(p));
 
-            var c = beacon(this.voter_id, [x, y, Y, a, b], q);
+            var c = beacon(this.voter_id, [x, y, Y, a, b], double_q, this.p_to_uni_table);
 
             var prev_d = bigInt(d[v]);
             var prev_r = bigInt(r[v]);
 
-            var d_sum = rmod(d.reduce(function (d1, d2){ return d1.add(d2).mod(q); }, bigInt.zero).subtract(d[v]), q);
+            var d_sum = d.reduce(function (d1, d2){ return d1.add(d2).mod(double_q); }, bigInt.zero);
 
-            d[v] = rmod(c.subtract(d_sum), q);
+            d[v] = rmod(c.subtract(d_sum).add(prev_d), double_q);
 
             //r[v] = w.subtract(u.times(d[v])).mod(q);
             //console.log("(alpha, prev_d, new_d, prev_r, q)");
             //console.log(alpha.toString(), prev_d.toString(), d[v].toString(), prev_r.toString(), q.toString());
-            var new_r = rmod(alpha.times(prev_d.subtract(d[v])).add(prev_r), q);
+            var new_r = rmod(alpha.times(prev_d.subtract(d[v])).add(prev_r), double_q);
             //console.log("new_r =", new_r.toString());
             r[v] = new_r;
 
-            var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
+            //var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
 
-            var test2 = b[v].equals(Y[v].modPow(d[v], p).times(h.modPow(r[v], p)).mod(p));
+            //var test2 = b[v].equals(Y[v].modPow(d[v], p).times(h.modPow(r[v], p)).mod(p));
 
-            console.log(test1, test2);
+            //console.log(test1, test2);
 
 
             this.commits[i] = {vote: {x: x, y: y}, Y: Y, a: a, b: b, d: d, r: r};
         }
 
+        this.votes_verified[this.voter_id] = true; //obviously we trust ourselves
+                                                   //also want to make sure this is
+                                                   //set only after having actually
+                                                   //encrypted our own vote
+
         return this.commits;
     }
 
     verify_vote(p_id: number, commits: Array<Vote_commit>): boolean {
+
+        if (this.votes_verified[p_id]){
+            // We have already verified a vote from this person.
+            // We can thus safely return true. Note this also means
+            // that we will not accept any "new" votes by anyone.
+            // This could be changed in the future, but to stay on the 
+            // side of safety and ease, I'm leaving it.
+            
+            return true;
+        }
+
         var verified = true; //TODO: double check scope of this guy
 
         var p = this.p;
+        var double_q = this.double_q;
         var q = this.q;
         var g = this.g;
         var h = this.public_key;
@@ -380,10 +454,10 @@ class CryptoVoter extends Pedersen {
             var commit = commits[i];
 
             var c = beacon(p_id, [commit.vote.x, commit.vote.y, commit.Y, 
-                           commit.a, commit.b], q);
+                           commit.a, commit.b], double_q, this.p_to_uni_table);
 
             if (!c.equals(commit.d.reduce(function (d1, d2){ // make sure c == sum(d)
-                return d1.add(d2).mod(q); }, bigInt.zero))){
+                return d1.add(d2).mod(double_q); }, bigInt.zero))){
 
                     verified = false;
             }
@@ -391,6 +465,10 @@ class CryptoVoter extends Pedersen {
             console.log("test0:", verified);
 
             for (var j = 0; j < this.options[i]; j += 1){
+                if (!verified){
+                    break;
+                }
+
                 var test1 = commit.a[j].equals(commit.vote.x.modPow(commit.d[j], p).times(
                     g.modPow(commit.r[j], p)).mod(p));
                 var test2 = commit.b[j].equals(commit.Y[j].modPow(commit.d[j], p).times(
@@ -403,10 +481,6 @@ class CryptoVoter extends Pedersen {
                 }
                 else {
                     console.log("passed one for", p_id);
-                }
-
-                if (!verified){
-                    break;
                 }
             }
 
@@ -432,7 +506,7 @@ class CryptoVoter extends Pedersen {
             this.votes_verified[p_id] = true;
         }
 
-        return verified;
+        return true;
     }
 
     calc_vote_step1(): Pedersen_commit {
@@ -443,6 +517,8 @@ class CryptoVoter extends Pedersen {
             return a && b;
         });
 
+        console.log("in calc_vote_step1, this.votes_verified", this.votes_verified);
+
         if (!all_verified){
             console.log("Cannot continue with decryption, not all voters verified.");
             return null;
@@ -451,6 +527,8 @@ class CryptoVoter extends Pedersen {
             this.global_votes[this.voter_id] = this.encrypted_vote;
 
             var ws = new Array(this.num_votes);
+
+            console.log("global_votes", this.global_votes);
 
             for (var i = 0; i < this.num_votes; i += 1){
                 var vote_array = this.global_votes.map((voter) => voter[i]);
@@ -484,6 +562,8 @@ class CryptoVoter extends Pedersen {
 function test_vote(num_voters = 4, options = [4]){
     var p = bigInt("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF", 16);
 
+    p = bigInt(107);
+
     var q = p.prev().divide(2);
     var g = bigInt(2);
     var generators = [bigInt(2), bigInt(4), bigInt(8), bigInt(16)];
@@ -501,8 +581,14 @@ function test_vote(num_voters = 4, options = [4]){
 
     var vote_proofs = [];
 
+    var p_to_uni_table = new Array(num_voters);
+
     for (var i = 0; i < num_voters; i += 1){
-        voters.push(new CryptoVoter(p, g, num_voters, i, options, generators));
+        p_to_uni_table[i] = Math.random().toString(16).substring(2).toUpperCase();
+    }
+
+    for (var i = 0; i < num_voters; i += 1){
+        voters.push(new CryptoVoter(p, g, num_voters, i, options, generators, p_to_uni_table));
 
         voters[voters.length-1].set_vote(votes[i]);
 
@@ -561,7 +647,8 @@ function test_vote(num_voters = 4, options = [4]){
 
     console.log("Election result:", test_out);
 
-    var expected_out = range_apply(num_votes, (i) => votes.map((v) => v[i]).reduce((x, y) => x*generators[y].toJSNumber(), 1));
+    var expected_out = range_apply(num_votes, (i) => votes.map((v) => v[i]).reduce(
+        (x, y) => x.multiply(generators[y]).mod(p), bigInt.one));
 
     console.log("Expected result:", expected_out);
 

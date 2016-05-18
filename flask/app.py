@@ -45,15 +45,18 @@ def authenticated_only(f):
 
 @login_manager.user_loader
 def load_user(user_id):
+    print "load_user called"
     user_id = str(user_id)
 
 
     if user_id in users:
+        print "already in users dict"
         return users[user_id]
 
     # this check helps when the server is restarted so the users dict is emptied,
     # but users still have valid sessions. thus we can log them back in
     elif "user_id" in session:
+        print "in session"
         user_data = db_func.get_user_by_id(user_id)
         if user_data is not None:
             # we can safely add the user back in
@@ -730,6 +733,14 @@ def crypto_election(election_id = None):
             
             return render_template("crypto_" + "single" + ".html", **locals()) # TODO: "single" to the vote_method. not working now becuase vote_method is an int, need to ask Yang/Jacky
 
+
+@app.route("/view_crypto_result/<election_id>")
+def view_crypto(election_id = None):
+    if election_id is None:
+        return redirect("/")
+
+    return render_template("view_crypto_result.html", **locals())
+
 #### WEBSOCKET FUNCTIONS ####
 socketio = SocketIO(app)
 
@@ -784,6 +795,11 @@ def public_key_share(election_id, key_share):
     if inserted:
         # they haven't submitted a PKS before, so it's all good
         emit("public_key_share", {"unique_id": current_user.unique_id, "key_share": key_share}, room = election_id)
+
+        # update those viewing the election status
+        table = db_func.get_crypto_result_table(election_id)
+        emit("view_full_table", {"table": table}, room = "view_crypto_result" + election_id)
+
     else:
         # they've already submitted the public key, we haven't submitted it in the DB
         emit("pk_already_submitted")
@@ -836,9 +852,16 @@ def send_proof(election_id, proof_type, proof):
     # add proof to DB
     #proofs[(current_user.unique_id, proof_type)] = proof
 
-    db_func.insert_proof(election_id, current_user.unique_id, proof_type, proof)
+    inserted = db_func.insert_proof(election_id, current_user.unique_id, proof_type, proof)
 
-    emit("proof", {"unique_id": current_user.unique_id, "proof_type": proof_type, "proof": proof}, room = election_id)
+    if (inserted):
+        emit("proof", {"unique_id": current_user.unique_id, "proof_type": proof_type, "proof": proof}, room = election_id)
+
+        table = db_func.get_crypto_result_table(election_id)
+        emit("view_full_table", {"table": table}, room = "view_crypto_result" + election_id)
+
+    else:
+        emit("proof_already_submitted")
 
 
 """@socketio.on("request_proof")
@@ -854,7 +877,7 @@ def request_proof(election_id, proof_type, unique_id):
 
     else:
         emit("unproved")
-        """
+ """
 
 @socketio.on("get_all_proofs")
 @authenticated_only
@@ -883,6 +906,23 @@ def final_tally(election_id, tally):
 
     # if len(final_tallies) == n: check all the same
 
+
+
+### VIEW CRYPTO RESULTS ###
+@socketio.on("join_crypto_view")
+@authenticated_only
+#@authed_for_election
+def join_crypto_view(election_id = None):
+    print "join_crypto_view"
+    if election_id is not None:
+        join_room("view_crypto_result" + election_id)
+
+        table = db_func.get_crypto_result_table(election_id)
+        emit("view_full_table", {"table": table})
+
+
+
+### RUN EVERYTHING ###
 if __name__ == "__main__":
     app.debug = True
     # app.run()

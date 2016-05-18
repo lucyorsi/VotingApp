@@ -347,3 +347,36 @@ def get_all_proofs(election_id):
 
     return [{"unique_id": row[0], "proof_type": row[1], "proof": row[2]} for row in results]
 
+def get_crypto_result_table(election_id):
+    cursor = conn.cursor()
+
+    voters = get_qualified_voters(election_id)
+
+    table = {}
+    for u_id in voters:
+        cursor.execute("SELECT user_email FROM user_info WHERE user_key=%s", (u_id,))
+        conn.commit()
+        email = cursor.fetchone()[0]
+
+        cursor.execute("SELECT proof_type FROM crypto_proofs WHERE election_id=%s AND unique_id=%s", (election_id, u_id))
+        conn.commit()
+
+        proofs = cursor.fetchall()
+        if ("pedersen",) in proofs:
+            table[email] = 3
+        elif ("valid_vote",) in proofs:
+            table[email] = 2
+        else:
+            cursor.execute("SELECT 1 FROM public_key_shares WHERE election_id=%s AND unique_id=%s", (election_id, u_id))
+            conn.commit()
+
+            pk = cursor.fetchone()
+
+            if pk is not None:
+                table[email] = 1
+            else:
+                table[email] = 0
+
+
+    return table
+

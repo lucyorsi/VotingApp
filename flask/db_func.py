@@ -166,7 +166,7 @@ def create_vote(vote_name, expire_time, vote_method, candidate_upload_text, secu
 
 def check_vote_method(vote_id):
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM votes_info WHERE vote_id=%s", (vote_id))
+    cursor.execute("SELECT * FROM votes_info WHERE vote_id=%s", (vote_id,))
     conn.commit()
 
     results = cursor.rowcount
@@ -178,7 +178,7 @@ def check_vote_method(vote_id):
 
 def get_candidate_list(vote_id):
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM candidates_list WHERE vote_id=%s ORDER BY candidate_id", (vote_id))
+    cursor.execute("SELECT * FROM candidates_list WHERE vote_id=%s ORDER BY candidate_id", (vote_id,))
     conn.commit()
 
     results = cursor.fetchall()
@@ -237,7 +237,7 @@ def count_candidate_total_yes(vote_id, candidate_id):
 
 def create_new_list(vote_id):
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO ranking_list_info (vote_id) VALUES(%s)", (vote_id))
+    cursor.execute("INSERT INTO ranking_list_info (vote_id) VALUES(%s)", (vote_id,))
     conn.commit()
     list_id = cursor.lastrowid
     cursor.close()
@@ -282,7 +282,7 @@ def execute_sql_insert_user_info(username, password, email, user_key):
 
 def get_qualified_voters(vote_id):
     cursor = conn.cursor()
-    cursor.execute("SELECT voter_id, voter_order FROM qualified_voters WHERE vote_id=%s", (vote_id))
+    cursor.execute("SELECT voter_id, voter_order FROM qualified_voters WHERE vote_id=%s", (vote_id,))
     conn.commit()
 
     results = cursor.fetchall()
@@ -293,7 +293,7 @@ def get_qualified_voters(vote_id):
 
     for voter in results:
         print "QUALIFIED VOTER", voter
-        cursor.execute("SELECT user_key FROM user_info WHERE user_id=%s", (str(voter[0])))
+        cursor.execute("SELECT user_key FROM user_info WHERE user_id=%s", (str(voter[0]),))
         conn.commit()
 
         user_key = cursor.fetchone()

@@ -4,6 +4,8 @@
 "use strict";
 
 function flatten(array: Array<any>): Array<any> {
+    // Flattens nested arrays, no matter how deep.
+
     return array.reduce(function(new_array, rest){
         return new_array.concat(Array.isArray(rest) ? flatten(rest) : rest);
     }, []);
@@ -20,8 +22,8 @@ function modProd(array: Array<BigInteger>, m: BigInteger){
 }
 
 function rmod(n: BigInteger, m: BigInteger): BigInteger {
-    /* this function is needed because the BigInt lib thinks
-     * -1 mod 2 == -1. Whatever. */
+    // Returns n mod m, guaranteeing the result is positive. This function is needed
+    // because the BigInteger libs will output negative values for mod().
 
     var r = n.mod(m);
     if (r.isNegative()){
@@ -34,29 +36,9 @@ function rmod(n: BigInteger, m: BigInteger): BigInteger {
 function hex_to_int(str: string):BigInteger {
     return bigInt(str, 16);
 }
-
-/*function randint(r: BigInteger):BigInteger {
-    // Returns a random integer on [0, r)
-
-    //TODO: efficiency may be really bad
-
-    var random32 = new Uint32Array(1); // this array will hold the window.crypto 
-                                       // generated random value
-    var random = bigInt(0); // this is the value that will be returned
-    var i = 0; // represents the "slot" of 32 we are at
-
-    while (bigInt(32).pow(i).lesser(r)){ // make sure we generate more bits than in r
-        self.crypto.getRandomValues(random32); // gets one 32-bit random value
-        // shift the random value over by 32*i and increment random by it
-        random = random.add(bigInt(random32[0]).shiftLeft(32 * i));
-        i++;
-    }
-
-    return random.mod(r);
-}*/
-
+ 
 function randint(r: BigInteger): BigInteger {
-    // returns a random integer on [0, r)
+    // Returns a random integer on [0, r)
     // Note: this is super hacky, using strings and shit as large numbers
     // BigInteger.js really needs to allow you to create one from an array
     // *shrug*
@@ -65,33 +47,46 @@ function randint(r: BigInteger): BigInteger {
     // yes, to find the number of bytes needed we convert it to a binary
     // string... yikes
     
+    // This allows us to get real crypto-secure random numbers in JS! Wow!
+    // randoms is an array of random 32 bit ints
     var randoms = new Uint32Array(num_bytes);
     self.crypto.getRandomValues(randoms);
 
+    // We then take this nice array of ints... and turn it into a nasty
+    // string that can be interpretted by bigInt
+    // Looks like "<int><int><int>..."
     var random_string = "<" + randoms.join("><") + ">";
 
+    // We can finally create the BigInteger by creating it from a string
+    // and using base 2^32
+    // ...
     return bigInt(random_string, Math.pow(2, 32)).mod(r);
 }
 
 function mod_div(n: BigInteger, d: BigInteger, m: BigInteger):BigInteger {
-    var inverse = d.modPow(m.minus(2), m);
-    return n.times(inverse).mod(m);
+    // Returns n/d mod m
+    // Uses the fact that inverse of d mod m is d^(m-2) mod m
+    return n.times(d.modPow(m.minus(2), m)).mod(m);
 }
 
 function pad_hex_string(str: string): string {
+    // Pads a hex string with "0" so that length of the string is even
     if ((str.length % 2) !== 0){
         str = str + "0";
     }
     return str;
 }
 
+// TRY 1
+/*
 function beacon(p_id: number, array: Array<any>, m: BigInteger, p_to_uni_table: Array<string>): BigInteger{
-    //console.log("from beacon", p_to_uni_table);
+    // The function takes in BigIntegers and outputs a hash mod m. It also looks up the
+    // unique id of the original submitter to ensure that they can't cheat. Uses SHA256
+    // to generate the hash. Input and output of hash is hex.
     //TODO: this will just output 256 bits which is way too small
+
     var all_nums = flatten(array);
 
-    //console.log(p_id);
-    //console.log(p_to_uni_table[p_id]);
     var shaObj = new jsSHA("SHA-256", "HEX");
     shaObj.update(pad_hex_string(p_to_uni_table[p_id]));
 
@@ -105,21 +100,83 @@ function beacon(p_id: number, array: Array<any>, m: BigInteger, p_to_uni_table: 
 
     return bigInt(hash, 16).mod(m);
 }
+*/
 
-/*function beacon(p_id: number, array: Array<any>, m: BigInteger, p_to_uni_table: Array<string>): BigInteger{
+// TRY 2
+/*
+function beacon(p_id: number, array: Array<any>, m: BigInteger, p_to_uni_table: Array<string>): BigInteger{
+    // The function takes in BigIntegers and outputs a hash mod m. It also looks up the
+    // unique id of the original submitter to ensure that they can't cheat. Uses SHA256
+    // to generate the hash. Input and output of hash is hex.
+
     var all_nums = flatten(array);
 
     var shaObj = new jsSHA("SHA-256", "HEX");
 
-    var hex_string = p_to_uni_table[p_id];
+    var input_str = p_to_uni_table[p_id];
 
     for (let n of all_nums){
-        hex_string += n.toString(16);
+        input_str += n.toString(16);
     }
 
-    hex_string = pad_hex_string(hex_string);*/
+    console.log(input_str);
 
+    //var num_segments = Math.ceil(input_str.length / 8); //TODO generalize from 2048/256 = 8?
+    var num_segments = 8;
+    var segment_length = Math.ceil(input_str.length / num_segments);
 
+    for (var i = 0; i < num_segments; i += 1){
+        var segment = input_str.slice(i * segment_length, (i + 1) * segment_length);
+        console.log(i, num_segments - 1);
+        if (i === num_segments - 1){
+            console.log("hi");
+            segment = pad_hex_string(segment);
+        }
+        console.log(segment.length);
+       
+        shaObj.update(segment);
+    }
+
+    var hash = shaObj.getHash("HEX");
+
+    return bigInt(hash, 16).mod(m);
+}
+*/
+
+// TRY 3
+function beacon(p_id: number, array: Array<any>, m: BigInteger, p_to_uni_table: Array<string>): BigInteger{
+    // The function takes in BigIntegers and outputs a hash mod m. It also looks up the
+    // unique id of the original submitter to ensure that they can't cheat. Uses SHA256
+    // to generate the hash. Input and output of hash is hex. Ensures output integer has
+    // same number of bits as m.
+
+    var all_nums = flatten(array);
+
+    // input_str is just a concatentation of the unique and every integer in the given
+    // array, all in hex.
+    var input_str = p_to_uni_table[p_id];
+    for (let n of all_nums){
+        input_str += n.toString(16);
+    }
+
+    var hash = "";
+
+    // The number of times we need to run the hash in order to make sure it has equal to
+    // or more than the number of bits in m
+    var hash_times = Math.ceil(m.toString(2).length / 256);
+
+    // Now we just set the output string, hash, to 
+    // hash(1 | input_str) | hash(2 | input_str) | ...
+    // This ensures we have enough output width and that the entire hash is still
+    // dependent on every input bit
+    for (var i = 0; i < hash_times; i += 1){
+        var shaObj = new jsSHA("SHA-256", "HEX");
+        shaObj.update(pad_hex_string(i + input_str));
+        hash += shaObj.getHash("HEX");
+    }
+
+    return bigInt(hash, 16).mod(m);
+}
 
 interface Pedersen_commit{
     y: Array<BigInteger>;
@@ -138,7 +195,7 @@ class Pedersen {
     double_q: BigInteger;
     q: BigInteger;
     pedersen_commits_verified: Array<boolean>;
-    global_decrypt_shares: Array<any>; //TODO: share type
+    global_decrypt_shares: Array<Array<BigInteger>>;
     secret: BigInteger;
     public_key_share: BigInteger;
     public_key: BigInteger;
@@ -167,33 +224,32 @@ class Pedersen {
         }
 
         this.public_key_share = g.modPow(this.secret, p);
-        //TODO: publish_public_key_share(party_id, self.public_key_share);
         
         this.public_key_shares = new Array(n);
     }
 
     receive_public_key_share(p_id: number, share: BigInteger){
+        // Stores another users public key share
         this.public_key_shares[p_id] = share;
     }
 
     make_public_key(): BigInteger{
-        //var public_key_shares = get_public_key_shares(); // grab the others' key shares
-        
+        // Constructs the public key from all the public key shares.
+        // If number of shares receieved is unsufficient, returns null.
+        // Otherwise, returns the constructed public key.
+
         this.public_key_shares[this.party_id] = this.public_key_share;
 
-        var len = this.public_key_shares.reduce(function(a, b){ 
-            return a + (typeof b !== "undefined" ? 1 : 0);
-        }, 0);
+        var num_received_shares = this.public_key_shares.reduce((a, b) => a + (typeof b !== "undefined" ? 1 : 0), 0);
 
-        if (len === this.n){
+        if (num_received_shares === this.n){
             this.public_key = modProd(this.public_key_shares, this.p);
             this.h = this.public_key;
 
             return this.public_key;
         }
         else {
-            console.log("number of shares receieved:", len);
-            console.log("n:", this.n);
+            console.log("Public cannot yet be constructed; still missing " + (this.n - num_received_shares) + " shares.");
             return null;
         }
     }
@@ -205,7 +261,6 @@ class Pedersen {
       
         var x = this.public_key_share;
         var alpha = this.secret;
-        console.log(alpha.toString());
         var p = this.p;
         var double_q = this.double_q;
         var q = this.q;
@@ -268,11 +323,10 @@ class Pedersen {
             this.global_decrypt_shares[p_id] = y;
         }
 
-        return verified; //TODO: consider if this is necessary
+        return verified;
     }
 
     log_ZKP_verify_all(): boolean {
-        //TODO: double check this is all we need
         return this.pedersen_commits_verified.reduce(function(a, b){ return a && b});
     }
 
@@ -352,80 +406,90 @@ class CryptoVoter extends Pedersen {
     }
 
     encrypt_and_prove(): Array<Vote_commit> {
-        this.encrypted_vote = new Array(this.num_votes);
+        // First encrypts each of the voter's votes, and the does the ZKPs to prove they
+        // are valid. Taken from diagram 3 of the VOTEPAPER.
 
-        console.log("this.num_votes", this.num_votes);
+        // Make sure we know our own vote
+        if (typeof this.vote === "undefined"){
+            console.log(" *Cannot encrypt vote; vote has not yet been set.");
+            return null;
+        }
 
-        var h = this.public_key;
-
-        this.commits = new Array(this.num_votes);
-
+        // shorter names for more readability
         var p = this.p;
         var g = this.g;
+        var h = this.public_key;
         var double_q = this.double_q;
         var q = this.q;
         var generator_inverses = this.generator_inverses;
 
+        // this will contain the array of (x, y) pairs of each encryption
+        this.encrypted_vote = new Array(this.num_votes);
+
+        // this will contain the final commits of the form ((x, y), Y, a, b, d, r)
+        this.commits = new Array(this.num_votes);
+
         for (var i = 0; i < this.num_votes; i += 1){
+            // the random key for this vote
             var alpha = randint(q);
 
             var v = this.vote[i];
             var G = this.generators[v];
-            console.log(this.voter_id, "'s G:", G.toString());
 
-            //var w = random_vector(this.num_votes, this.q); 
+            // start part 1
+
+            // d and r, which are just vectors (arrays) of random values,
+            // will be are kept secret in the first round of the ZKP. Then, we will
+            // modify one value from each at index v. We are only able to do so if our vote
+            // actually is just one of the generators and if we know alpha
             var d = random_vector(this.options[i], q); 
             var r = random_vector(this.options[i], q); 
 
+            // (x, y) = (g^alpha, h^alpha * G)
             var x = g.modPow(alpha, p);
             var y = h.modPow(alpha, p).times(G).mod(p);
             this.encrypted_vote[i] = {x: x, y: y};
 
-
-            //var u = q.subtract(alpha);
-
-            /*var Y = Array.apply(null, Array(this.options[i])).map(function (o, j){
-                return y.times(this.generator_inverses[j]);
-            });*/
-
+            // Y is a vector of (y/g_0, y/g_1, ... ) where g_i are the valid generators
             var Y = range_apply(this.options[i], (j) => y.times(generator_inverses[j]).mod(p));
 
-            //var w = u.times(d[v]).add(r[v]).mod(q);
-
+            // a and b "commit" the prover (us) for the first part
             var a = range_apply(this.options[i], (j) => x.modPow(d[j], p).times(g.modPow(r[j], p)).mod(p));
-
             var b = range_apply(this.options[i], (j) => Y[j].modPow(d[j], p).times(h.modPow(r[j], p)).mod(p));
+            // end of the first part
 
+            // Instead of sending (x, y, Y, a, b) to the verifier, and have them then
+            // challenge us with a random value for c, we can instead simply do
+            // c = hash(our unique id | commit). This allows to both avoid the large
+            // network overhead as well as preventing the case of the malicious verifier
             var c = beacon(this.voter_id, [x, y, Y, a, b], double_q, this.p_to_uni_table);
 
+            // start part 2
+            
             var prev_d = bigInt(d[v]);
             var prev_r = bigInt(r[v]);
 
-            var d_sum = d.reduce(function (d1, d2){ return d1.add(d2).mod(double_q); }, bigInt.zero);
+            // sum(d)
+            var d_sum = d.reduce((d1, d2) => d1.add(d2).mod(double_q), bigInt.zero);
 
+            // Set the d value at index v, our vote, to c - sum(d) + d[v]
+            // This ensures that c is equal to the sum of the modified d which will be
+            // verified by the verifier
             d[v] = rmod(c.subtract(d_sum).add(prev_d), double_q);
 
-            //r[v] = w.subtract(u.times(d[v])).mod(q);
-            //console.log("(alpha, prev_d, new_d, prev_r, q)");
-            //console.log(alpha.toString(), prev_d.toString(), d[v].toString(), prev_r.toString(), q.toString());
-            var new_r = rmod(alpha.times(prev_d.subtract(d[v])).add(prev_r), double_q);
-            //console.log("new_r =", new_r.toString());
-            r[v] = new_r;
+            // The new r value at index v is (alpha * (previous d - new d)) + previous r
+            // This ensures that TODO explain
+            r[v] = rmod(alpha.times(prev_d.subtract(d[v])).add(prev_r), double_q);
 
-            //var test1 = a[v].equals(x.modPow(d[v], p).times(g.modPow(r[v], p)).mod(p));
-
-            //var test2 = b[v].equals(Y[v].modPow(d[v], p).times(h.modPow(r[v], p)).mod(p));
-
-            //console.log(test1, test2);
-
-
+            // Add this value to the commit array
             this.commits[i] = {vote: {x: x, y: y}, Y: Y, a: a, b: b, d: d, r: r};
         }
 
-        this.votes_verified[this.voter_id] = true; //obviously we trust ourselves
-                                                   //also want to make sure this is
-                                                   //set only after having actually
-                                                   //encrypted our own vote
+        // Obviously we trust ourselves, but we  also want to make sure this is
+        // set only after having actually encrypted our own vote
+        this.votes_verified[this.voter_id] = true; 
+
+        console.log("Encrypted vote and generated corresponding ZKP.");
 
         return this.commits;
     }
@@ -436,13 +500,11 @@ class CryptoVoter extends Pedersen {
             // We have already verified a vote from this person.
             // We can thus safely return true. Note this also means
             // that we will not accept any "new" votes by anyone.
-            // This could be changed in the future, but to stay on the 
-            // side of safety and ease, I'm leaving it.
-            
+
             return true;
         }
 
-        var verified = true; //TODO: double check scope of this guy
+        var verified = true;
 
         var p = this.p;
         var double_q = this.double_q;

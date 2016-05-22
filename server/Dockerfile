@@ -9,7 +9,7 @@ ENV MYSQL_USER=mysql \
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server 
 
-RUN apt-get install -y python3 python-pip libmysqlclient-dev python-mysqldb
+RUN apt-get install -y python python-pip libmysqlclient-dev python-mysqldb
 RUN pip install flask flask-mysql flask-socketio flask-login eventlet
 
 COPY ./setup_mysql.sh /tmp/setup_mysql.sh

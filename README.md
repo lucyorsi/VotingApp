@@ -1,5 +1,77 @@
-# project-igroup
-project-igroup created by GitHub Classroom
+# AnotherVote
+It's Just Another Voting App™. Allows people to host votes using several different voting schemes as well as three different levels of security.
+
+## Installation
+First, clone the repo:
+```
+$ cd /path/for/repo
+$ git clone https://github.com/cuhk-csci4140/project-igroup.git
+$ cd project-igroup
+```
+
+### Using Docker
+We have provided a Dockerfile which sets everything up. It sets up MySQL with a default password of "password", but you can change this by editing line 7 of the Dockerfile at `server/Dockerfile`.
+```
+  DATABASE_PASS=yourpasswordhere
+```
+
+Build the docker image:
+```
+$ cd server
+# docker build -t igroup-voting-server .
+```
+
+Run the docker image with something like:
+```
+# docker run --name voting-server -it -d -p 80:5000 -v /path/for/repo:/data igroup-voting-server
+```
+You can change `80` if you want to run the server on a non-standard port.
+
+Go into the docker container and start up the server:
+```
+# docker attach voting-server
+root@[CONTAINER ID]:/# service mysql start
+root@[CONTAINER ID]:/# cd /data/project-igroup/flask
+root@[CONTAINER ID]:/# python app.py
+```
+
+Finally navigate to `localhost` in your browser and you should see homepage. (if you entered a different port than `80` in the `docker run` command, go to `localhost:port`)
+
+### Avoiding Docker
+
+You will need to install the following packages on your system: `mysql`, `python2`, `pip2`, `libmysqlclient`, and `python-mysqldb`.
+
+For example, on Ubuntu, you can do:
+```
+# apt-get install mysql-server python python-pip libmysqlclient-dev python-mysqldb
+```
+
+Then install the needed Python packages with pip:
+```
+# pip install flask flask-mysql flask-socketio flask-login eventlet
+```
+
+Make sure the mysql server is started (`# service mysql start` on Ubuntu) and enter a MySQL session:
+```
+# mysql -u root -p
+[enter your password]
+> create database AnotherVote;
+> exit;
+```
+
+Then set the environment variable `DATABASE_PASS` to your MySQL root password, and run:
+```
+$ cd flask
+# python app.py
+```
+
+If you don't want to set the environment variable, you can just do
+```
+$ cd flask
+# DATABASE_PASS=yourmysqlrootpass python app.py
+```
+
+You should then be able to navigate to `localhost:5000` in your browser and see the site.
 
 ## Crypto stuff
 

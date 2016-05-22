@@ -1,6 +1,7 @@
 from flask.ext.mysql import MySQL
 import app as a
 import time
+import os
 
 app = a.app
 
@@ -8,7 +9,7 @@ mysql = MySQL()
 
 # MySQL configurations
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'password'
+app.config['MYSQL_DATABASE_PASSWORD'] = os.environ["DATABASE_PASS"]
 app.config['MYSQL_DATABASE_DB'] = 'AnotherVote'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
